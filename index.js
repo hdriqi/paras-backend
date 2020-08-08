@@ -17,6 +17,7 @@ const Transaction = require('./controllers/Transaction')
 const Verification = require('./controllers/Verification')
 const Explore = require('./controllers/Explore')
 const Balance = require('./controllers/Balance')
+const Near = require('./controllers/Near')
 
 const PORT = 9090
 const server = express()
@@ -26,10 +27,14 @@ const main = async () => {
   const mail = new Mail()
   const state = new State(storage)
   const cron = new Cron(state, storage, mail)
+  const near = new Near()
   await storage.init()
   await mail.init()
   await state.init()
   await cron.init()
+  await near.init()
+
+  await near.deployContract()
 
   const feed = new Feed(state, storage)
   const transaction = new Transaction(state, storage)

@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:contract": "nodemon --watch assembly -e ts --exec asp",
+    "dev:contract": "NODE_ENV=development nodemon --watch assembly -e ts --exec asp",
     "build:contract": "asb",
-    "deploy:contract": "near dev-deploy",
-    "dev": "nodemon --watch '*.js' index.js"
+    "deploy:contract": "NODE_ENV=development node deploy.js",
+    "dev": "NODE_ENV=development nodemon --watch '*.js' index.js"
   },
   "author": "",
   "license": "ISC",

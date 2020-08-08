@@ -1,0 +1,43 @@
+{
+  "name": "paras-alpha-indexer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:contract": "nodemon --watch assembly -e ts --exec asp",
+    "build:contract": "asb",
+    "deploy:contract": "near dev-deploy",
+    "dev": "nodemon --watch '*.js' index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "base-64": "^0.1.0",
+    "body-parser": "^1.19.0",
+    "bs58": "^4.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "fuse.js": "^6.3.1",
+    "heml": "^1.1.3",
+    "js-base64": "^2.5.2",
+    "js-sha256": "^0.9.0",
+    "jsbi": "^3.1.3",
+    "jsonwebtoken": "^8.5.1",
+    "lokijs": "^1.5.8",
+    "mongodb": "^3.5.9",
+    "near-api-js": "^0.25.1",
+    "node-cron": "^2.0.3",
+    "nodemailer": "^6.4.8",
+    "query-params-mongo": "https://github.com/hdriqi/query-params-mongo",
+    "sjcl": "^1.0.8",
+    "tweetnacl": "^1.0.3",
+    "underscore": "^1.10.2"
+  },
+  "devDependencies": {
+    "near-sdk-as": "^1.0.1",
+    "near-shell": "^0.24.9",
+    "nodemon": "^2.0.4"
+  }
+}

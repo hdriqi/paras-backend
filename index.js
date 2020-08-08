@@ -11,13 +11,13 @@ const State = require('./State')
 const Storage = require('./Storage')
 const Mail = require('./Mail')
 const Cron = require('./Cron')
+const Near = require('./Near')
 
 const Feed = require('./controllers/Feed')
 const Transaction = require('./controllers/Transaction')
 const Verification = require('./controllers/Verification')
 const Explore = require('./controllers/Explore')
 const Balance = require('./controllers/Balance')
-const Near = require('./controllers/Near')
 
 const PORT = 9090
 const server = express()
@@ -33,8 +33,6 @@ const main = async () => {
   await state.init()
   await cron.init()
   await near.init()
-
-  await near.deployContract()
 
   const feed = new Feed(state, storage)
   const transaction = new Transaction(state, storage)

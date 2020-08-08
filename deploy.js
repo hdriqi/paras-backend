@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-const Near = require('./controllers/Near')
+const Near = require('./Near')
 
 const main = async () => {
   const near = new Near()

@@ -3,7 +3,7 @@ const { join } = require('path')
 const { InMemoryKeyStore, MergeKeyStore, UnencryptedFileSystemKeyStore } = require('near-api-js').keyStores
 const { parseNearAmount } = require('near-api-js').utils.format
 
-const config = require('../config')(process.env.NODE_ENV || 'development')
+const config = require('./config')(process.env.NODE_ENV || 'development')
 
 const contractConfig = {
   viewMethods: [

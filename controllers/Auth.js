@@ -56,11 +56,11 @@ class Auth {
       token: `${email}_${pin}`
     })
     if (!authExist) {
-      throw new Error('PIN invalid')
+      throw new Error('Invalid PIN/Email')
     }
     const currentTime = new Date().getTime()
     if (currentTime > authExist.expiredAt) {
-      throw new Error('PIN already expired')
+      throw new Error('Expired PIN')
     }
 
     const { seedPhrase, secretKey, publicKey } = nearSeedPhrase.generateSeedPhrase()

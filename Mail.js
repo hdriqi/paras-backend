@@ -5,6 +5,7 @@ const templateVerifyEmail = require('./MailTemplate/verifyEmail')
 const templateWalletEmail = require('./MailTemplate/walletEmail')
 const templateNotifyEmail = require('./MailTemplate/notifyEmail')
 const JSBI = require('jsbi')
+const aws = require('aws-sdk')
 
 const hemlOpts = {
   validate: 'soft',
@@ -21,14 +22,14 @@ class Mail {
   }
 
   async init() {
+    const SESConfig = new aws.SES({
+      apiVersion: '2010-12-01',
+      accessKeyId: process.env.SES_IAM_USER_KEY,
+      secretAccessKey: process.env.SES_IAM_USER_SECRET,
+      region: 'ap-southeast-1'
+    })
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.zoho.com',
-			port: 465,
-			secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+      SES: SESConfig
     })
   }
 

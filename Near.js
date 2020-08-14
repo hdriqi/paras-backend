@@ -78,25 +78,26 @@ class Near {
   }
 
   async checkAccount(accountId) {
-    let account = null
-    try {
-      account = await this.ctx.account(accountId)
-      return true
-    } catch (err) {
-      console.log(err)
-      return null
-    }
+    return new Promise(async (resolve) => {
+      let account = null
+      try {
+        account = await this.ctx.account(accountId)
+      } catch (err) {
+        // console.log(err)
+      }
+      resolve(account)
+    })
   }
 
-  async loadAccount({ username, privKey }) {
-    const accId = `${username}.${this.masterAccount.account}`
+  async loadAccount({ userId, secretKey }) {
+    const accId = userId
     const accExist = await this.checkAccount(accId)
     if (!accExist) {
       throw new Error(`Account ${accId} not exist`)
     }
-    const keyPair = KeyPair.fromString(`ed25519:${privKey}`)
-    await keyStore.setKey(config.networkId, accId, keyPair)
-    const contract = new Contract(accExist, `contract-beta-dev.paras.testnet`, contractConfig);
+    const keyPair = KeyPair.fromString(secretKey)
+    await this.keyStore.setKey(config.networkId, accId, keyPair)
+    const contract = new Contract(accExist, `contract-beta-dev.paras.testnet`, contractConfig)
 
     this.accountMap.set(accId, {
       publicKey: accExist.public_key,
@@ -106,15 +107,15 @@ class Near {
     return true
   }
 
-  async createAccount({ username, privKey }) {
-    const newAccId = `${username}.${this.masterAccount.account}`
-    const accExist = this.checkAccount(newAccId)
+  async createAccount({ userId, secretKey }) {
+    const newAccId = userId
+    const accExist = await this.checkAccount(newAccId)
     if (accExist) {
       throw new Error(`Account ${newAccId} already exist`)
     }
-    const keyPair = KeyPair.fromString(`ed25519:${privKey}`)
+    const keyPair = KeyPair.fromString(secretKey)
     const newAccount = await this.masterAccount.createAccount(newAccId, keyPair.publicKey.toString(), parseNearAmount('0.1'))
-    await this.loadAccount({ username, privKey })
+    await this.loadAccount({ userId, secretKey })
     return newAccount
   }
 

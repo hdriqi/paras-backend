@@ -18,6 +18,7 @@ const Transaction = require('./controllers/Transaction')
 const Verification = require('./controllers/Verification')
 const Explore = require('./controllers/Explore')
 const Balance = require('./controllers/Balance')
+const Auth = require('./controllers/Auth')
 
 const PORT = 9090
 const server = express()
@@ -28,17 +29,23 @@ const main = async () => {
   const state = new State(storage)
   const cron = new Cron(state, storage, mail)
   const near = new Near()
-  await storage.init()
-  await mail.init()
-  await state.init()
-  await cron.init()
-  await near.init()
+  try {
+    await storage.init()
+    await mail.init()
+    await state.init()
+    await cron.init()
+    await near.init()
+  } catch (err) {
+    console.log(err)
+    process.exit(1)
+  }
 
   const feed = new Feed(state, storage)
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)
   const balance = new Balance(state, storage)
+  const auth = new Auth(state, storage, mail, near)
 
   server.use(cors())
   server.use(bodyParser.urlencoded({ extended: true }))
@@ -48,6 +55,84 @@ const main = async () => {
     return res.json({
       success: 1
     })
+  })
+
+  server.post('/register', async (req, res) => {
+    const payload = {
+      email: req.body.email,
+      username: req.body.username,
+    }
+    try {
+      const result = await auth.register(payload)
+      return res.json({
+        success: 1,
+        data: result
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.post('/register/confirm', async (req, res) => {
+    const payload = {
+      email: req.body.email,
+      pin: req.body.pin
+    }
+    try {
+      const result = await auth.verifyRegister(payload)
+      return res.json({
+        success: 1,
+        data: result
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.post('/login', async (req, res) => {
+    const payload = {
+      userId: req.body.userId,
+      seed: req.body.seed
+    }
+    try {
+      const result = await auth.login(payload)
+      return res.json({
+        success: 1,
+        data: result
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.post('/verify', async (req, res) => {
+    try {
+      const result = await auth.verifyToken({
+        token: req.headers.authorization.split(' ')[1]
+      })
+      return res.json({
+        success: 1,
+        data: result
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/mementos', async (req, res) => {

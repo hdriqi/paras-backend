@@ -1,6 +1,6 @@
 const nearSeedPhrase = require('near-seed-phrase')
 const Cryptr = require('cryptr')
-const { DEFAULT_AVATAR } = require('../utils/constants')
+const { DEFAULT_AVATAR, DEFAULT_MEMENTO_IMG } = require('../utils/constants')
 
 class Auth {
   constructor(state, storage, mail, near) {
@@ -97,7 +97,7 @@ class Auth {
       })
 
       // create personal memento for account
-      const mementoImg = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
+      const mementoImg = DEFAULT_MEMENTO_IMG[0]
       const newMementoData = {
         name: 'timeline',
         category: 'info',

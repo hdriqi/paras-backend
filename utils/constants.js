@@ -40,5 +40,11 @@ module.exports = {
       url: 'QmQa68qLbW7iSSVNaS8o1rW9PiCYVoAneqn17D4oz6fbGu',
       type: 'ipfs'
     },
+  ],
+  DEFAULT_MEMENTO_IMG: [
+    {
+      url: 'QmYqaLrzfy5q36kphw3CCzLgkcpfPfGkZCQ326oKYde9to',
+      type: 'ipfs'
+    }
   ]
 }

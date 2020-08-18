@@ -1,5 +1,6 @@
 const nearSeedPhrase = require('near-seed-phrase')
 const Cryptr = require('cryptr')
+const { DEFAULT_AVATAR } = require('../utils/constants')
 
 class Auth {
   constructor(state, storage, mail, near) {
@@ -8,6 +9,7 @@ class Auth {
     this.mail = mail
     this.near = near
     this.cryptr = new Cryptr(process.env.TOKEN_SECRET)
+    this.usersMap = new Map()
   }
 
   async register({ email, username }) {
@@ -80,6 +82,31 @@ class Auth {
         updatedAt: new Date().getTime()
       })
 
+      const token = await this.login({
+        userId: authExist.userId,
+        seed: seedPhrase
+      })
+
+      // create account on smart contract
+      const avatar = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
+
+      const loadedAccount = this.near.accountsMap.get(authExist.userId)
+      const profile = await loadedAccount.contract.createUser({
+        imgAvatar: avatar,
+        bio: ''
+      })
+
+      // create personal memento for account
+      const mementoImg = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
+      const newMementoData = {
+        name: 'timeline',
+        category: 'info',
+        img: mementoImg,
+        desc: 'My Timeline',
+        type: 'personal'
+      }
+      await loadedAccount.contract.createMemento(newMementoData)
+
       this.mail.send({
         from: `"Paras Team" <hello@paras.id>`,
         to: email,
@@ -87,39 +114,42 @@ class Auth {
         text: `Your seed password is ${seedPhrase}`
       })
 
-      const token = await this.login({
-        userId: authExist.userId,
-        seed: seedPhrase
-      })
-
       return {
         seedPassword: seedPhrase,
-        token: token
+        token: token,
+        profile: profile
       }
     } catch (err) {
       console.log(err)
-      return err
+      throw new Error(err)
     }
   }
 
   async login({ userId, seed }) {
-    const { secretKey, publicKey } = nearSeedPhrase.parseSeedPhrase(seed)
+    try {
+      const { secretKey, publicKey } = nearSeedPhrase.parseSeedPhrase(seed)
 
-    const accExist = await this.storage.db.collection('credential').findOne({
-      userId: userId,
-      publicKey: publicKey,
-    })
+      const accExist = await this.storage.db.collection('credential').findOne({
+        userId: userId,
+        publicKey: publicKey,
+      })
 
-    if (!accExist) {
-      throw new Error('Invalid username/seed')
+      if (!accExist) {
+        throw new Error('Invalid username/seed')
+      }
+      await this.near.loadAccount({
+        userId,
+        secretKey
+      })
+
+      const token = this.cryptr.encrypt(secretKey)
+
+      return token
+    } catch (err) {
+      console.log(err)
+      throw new Error(err)
     }
-    await this.near.loadAccount({
-      userId,
-      secretKey
-    })
-    const token = this.cryptr.encrypt(secretKey)
 
-    return token
   }
 
   async verifyToken({ token }) {

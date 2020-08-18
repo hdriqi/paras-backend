@@ -1,6 +1,6 @@
 const { Contract, KeyPair, connect } = require('near-api-js')
 const { join } = require('path')
-const { InMemoryKeyStore, MergeKeyStore, UnencryptedFileSystemKeyStore } = require('near-api-js').keyStores
+const { InMemoryKeyStore, MergeKeyStore } = require('near-api-js').keyStores
 const { parseNearAmount } = require('near-api-js').utils.format
 
 const config = require('./config')(process.env.NODE_ENV || 'development')
@@ -45,7 +45,7 @@ class Near {
   constructor() {
     this.ctx = null
     this.masterAccount = null
-    this.accountMap = new Map()
+    this.accountsMap = new Map()
   }
 
   async init() {
@@ -97,10 +97,10 @@ class Near {
     }
     const keyPair = KeyPair.fromString(secretKey)
     await this.keyStore.setKey(config.networkId, accId, keyPair)
-    const contract = new Contract(accExist, `contract-beta-dev.paras.testnet`, contractConfig)
+    const contract = new Contract(accExist, this.contractAccount.accountId, contractConfig)
 
-    this.accountMap.set(accId, {
-      publicKey: accExist.public_key,
+    this.accountsMap.set(accId, {
+      publicKey: keyPair.getPublicKey().toString(),
       contract: contract
     })
 

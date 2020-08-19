@@ -1,6 +1,7 @@
 const nearSeedPhrase = require('near-seed-phrase')
 const Cryptr = require('cryptr')
 const { DEFAULT_AVATAR, DEFAULT_MEMENTO_IMG } = require('../utils/constants')
+const axios = require('axios')
 
 class Auth {
   constructor(state, storage, mail, near) {
@@ -129,25 +130,27 @@ class Auth {
     try {
       const { secretKey, publicKey } = nearSeedPhrase.parseSeedPhrase(seed)
 
-      const accExist = await this.storage.db.collection('credential').findOne({
-        userId: userId,
-        publicKey: publicKey,
+      const response = await axios.post(`https://rpc.testnet.near.org`, {
+        jsonrpc: '2.0',
+        id: 'dontcare',
+        method: 'query',
+        params: {
+          request_type: 'view_access_key',
+          finality: 'final',
+          account_id: userId,
+          public_key: publicKey
+        }
       })
-
-      if (!accExist) {
+      if (response.data.result && response.data.result.error) {
         throw new Error('Invalid username/seed')
       }
-      await this.near.loadAccount({
-        userId,
-        secretKey
-      })
 
       const token = this.cryptr.encrypt(secretKey)
 
       return token
     } catch (err) {
       console.log(err)
-      throw new Error(err)
+      throw err
     }
 
   }

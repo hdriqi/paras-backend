@@ -1,8 +1,7 @@
 var cron = require('node-cron')
 
 class Cron {
-  constructor(state, storage, mail) {
-    this.state = state
+  constructor(storage, mail) {
     this.storage = storage
     this.mail = mail
   }

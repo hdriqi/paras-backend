@@ -31,7 +31,6 @@ class State {
     this.__init__ = true
     this.near = await nearAPI.connect(config)
     this.account = await this.near.account(process.env.CONTRACT_NAME)
-    this.start()
   }
 
   async processEvent(type, collection, data) {
@@ -135,9 +134,10 @@ class State {
       })
       const latestLen = await this.account.viewFunction(this.contractName, 'getEventLength')
       const currentLen = latestEvent ? latestEvent.value : 0
-      if (currentLen === 0) {
-        return
-      }
+      console.log(currentLen, latestLen)
+      // if (currentLen === 0) {
+      //   return
+      // }
       if (latestEvent === null) {
         console.log('fetch new data')
         const newEvents = await this.account.viewFunction(this.contractName, 'getEvents', {
@@ -147,6 +147,9 @@ class State {
           for await (const event of newEvents) {
             await this.handleEvent(event)
           }
+        }
+        if (latestLen - 1 > currentLen + newEvents.length) {
+          await this.fetchData()
         }
       }
       else if (latestLen - 1 > currentLen) {

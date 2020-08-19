@@ -27,7 +27,7 @@ const main = async () => {
   const storage = new Storage()
   const mail = new Mail()
   const state = new State(storage)
-  const cron = new Cron(state, storage, mail)
+  const cron = new Cron(storage, mail)
   const near = new Near()
   try {
     await storage.init()

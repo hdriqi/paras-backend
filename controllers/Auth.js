@@ -126,9 +126,11 @@ class Auth {
     }
   }
 
-  async login({ userId, seed }) {
+  async login({ userId, seed, privateKey }) {
     try {
-      const { secretKey, publicKey } = nearSeedPhrase.parseSeedPhrase(seed)
+      const { secretKey, publicKey } = privateKey ? await this.near.getKeyPair({
+        privateKey: privateKey
+      }) : nearSeedPhrase.parseSeedPhrase(seed)
 
       const response = await axios.post(`https://rpc.testnet.near.org`, {
         jsonrpc: '2.0',
@@ -141,6 +143,10 @@ class Auth {
           public_key: publicKey
         }
       })
+
+      if (response.data.error) {
+        throw new Error(response.data.error)
+      }
       if (response.data.result && response.data.result.error) {
         throw new Error('Invalid username/seed')
       }
@@ -155,7 +161,6 @@ class Auth {
       console.log(err)
       throw err
     }
-
   }
 
   async verifyToken({ token }) {
@@ -169,6 +174,7 @@ class Auth {
 
       return parsedData
     } catch (err) {
+      console.log(err)
       throw new Error('Invalid token')
     }
   }

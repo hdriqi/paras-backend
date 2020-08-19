@@ -112,6 +112,15 @@ class Near {
     return true
   }
 
+  async getKeyPair({ privateKey }) {
+    const secretKey = `ed25519:${privateKey}`
+    const keyPair = KeyPair.fromString(secretKey)
+    return {
+      secretKey: secretKey,
+      publicKey: keyPair.getPublicKey().toString()
+    }
+  }
+
   async createAccount({ userId, secretKey }) {
     const newAccId = userId
     const accExist = await this.checkAccount(newAccId)

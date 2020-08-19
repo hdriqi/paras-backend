@@ -100,7 +100,8 @@ const main = async () => {
   server.post('/login', async (req, res) => {
     const payload = {
       userId: req.body.userId,
-      seed: req.body.seed
+      seed: req.body.seed,
+      privateKey: req.body.privateKey
     }
     try {
       const result = await auth.login(payload)

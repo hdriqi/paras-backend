@@ -30,8 +30,8 @@ class Storage {
       }
     })
       .sort(query.sort)
-      .skip(query.skip)
-      .limit(query.limit)
+      .skip(query.skip || 0)
+      .limit(query.limit || 10)
 
     const arr = data.toArray()
     const iter = (await arr).map(x => x)

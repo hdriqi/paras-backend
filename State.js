@@ -17,6 +17,9 @@ class State {
 
   async start() {
     await this.fetchData()
+    setTimeout(() => {
+      this.start()
+    }, 3000)
   }
 
   async init() {
@@ -162,9 +165,6 @@ class State {
           await this.fetchData()
         }
       }
-      setTimeout(() => {
-        this.fetchData()
-      }, 3000)
     } catch (err) {
       console.log(err)
     }

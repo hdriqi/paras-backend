@@ -24,6 +24,17 @@ class Balance {
     })
     return latestBalance
   }
+
+  async transfer(userId, targetUserId, value, msg = '') {
+    const loadedAccount = this.near.accountsMap.get(userId)
+    await loadedAccount.contract.transfer({
+      to: targetUserId,
+      tokens: value,
+      msg: msg
+    })
+    const latestBalance = this.get(userId)
+    return latestBalance
+  }
 }
 
 module.exports = Balance

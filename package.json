@@ -8,6 +8,7 @@
     "build:contract": "asb",
     "deploy:contract": "NODE_ENV=development npm run build:contract && node deploy.js",
     "dev": "NODE_ENV=development nodemon --watch '*.js' index.js",
+    "start": "node index.js",
     "indexer": "node indexer.js"
   },
   "author": "",

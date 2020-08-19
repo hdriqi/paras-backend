@@ -232,7 +232,7 @@ const main = async () => {
     })
   })
 
-  server.get('/feeds', authenticate, async (req, res) => {
+  server.get('/feeds', authenticate({ auth: auth }), async (req, res) => {
     const {
       __skip,
       __limit
@@ -299,7 +299,7 @@ const main = async () => {
     }
   })
 
-  server.get('/follow', authenticate, async (req, res) => {
+  server.get('/follow', authenticate({ auth: auth }), async (req, res) => {
     try {
       const result = await feed.getFollowing(req.userId, req.query.__skip, req.query.__limit)
       return res.json({
@@ -314,7 +314,7 @@ const main = async () => {
     }
   })
 
-  server.post('/follow', authenticate, async (req, res) => {
+  server.post('/follow', authenticate({ auth: auth }), async (req, res) => {
     const {
       targetId,
       targetType
@@ -334,7 +334,7 @@ const main = async () => {
     }
   })
 
-  server.post('/unfollow', authenticate, async (req, res) => {
+  server.post('/unfollow', authenticate({ auth: auth }), async (req, res) => {
     const {
       targetId,
       targetType
@@ -354,7 +354,7 @@ const main = async () => {
     }
   })
 
-  server.get('/register', authenticate, async (req, res) => {
+  server.get('/register', authenticate({ auth: auth }), async (req, res) => {
     try {
       const user = await verification.checkRegister(req.userId)
       return res.json({
@@ -370,7 +370,7 @@ const main = async () => {
     }
   })
 
-  server.post('/register', authenticate, async (req, res) => {
+  server.post('/register', authenticate({ auth: auth }), async (req, res) => {
     const {
       email,
       fullName,

@@ -145,7 +145,10 @@ class Auth {
         throw new Error('Invalid username/seed')
       }
 
-      const token = this.cryptr.encrypt(secretKey)
+      const token = this.cryptr.encrypt(JSON.stringify({
+        userId: userId,
+        secretKey: secretKey
+      }))
 
       return token
     } catch (err) {
@@ -157,8 +160,9 @@ class Auth {
 
   async verifyToken({ token }) {
     try {
-      this.cryptr.decrypt(token)
-      return true
+      const decrypt = this.cryptr.decrypt(token)
+
+      return JSON.parse(decrypt)
     } catch (err) {
       throw new Error('Invalid token')
     }

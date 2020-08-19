@@ -17,7 +17,7 @@ const Feed = require('./controllers/Feed')
 const Transaction = require('./controllers/Transaction')
 const Verification = require('./controllers/Verification')
 const Explore = require('./controllers/Explore')
-const Balance = require('./controllers/Balance')
+const Wallet = require('./controllers/Wallet')
 const Auth = require('./controllers/Auth')
 
 const PORT = 9090
@@ -44,7 +44,7 @@ const main = async () => {
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)
-  const balance = new Balance(state, storage)
+  const wallet = new Wallet(storage, near)
   const auth = new Auth(state, storage, mail, near)
 
   server.use(cors())
@@ -211,12 +211,45 @@ const main = async () => {
     })
   })
 
+  server.post('/wallet/piece', authenticate({ auth: auth}), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.body.postId && req.body.value)) {
+        throw new Error('Required [postId, value]')
+      }
+      const accountBalance = await wallet.piece(userId, req.body.postId, req.body.value)
+      return res.json({
+        success: 1,
+        data: accountBalance
+      })
+    } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('not enough tokens on account'))
+        return res.status(400).json({
+          success: 0,
+          message: 'Not enough tokens on account'
+        })
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.get('/balances/:id', async (req, res) => {
-    const accountBalance = await balance.get(req.params.id)
-    return res.json({
-      success: 1,
-      data: accountBalance
-    })
+    try {
+      const accountBalance = await wallet.get(req.params.id)
+      return res.json({
+        success: 1,
+        data: accountBalance
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/comments', async (req, res) => {

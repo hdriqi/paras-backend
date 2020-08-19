@@ -161,8 +161,13 @@ class Auth {
   async verifyToken({ token }) {
     try {
       const decrypt = this.cryptr.decrypt(token)
+      const parsedData = JSON.parse(decrypt)
+      await this.near.loadAccount({
+        userId: parsedData.userId,
+        secretKey: parsedData.secretKey
+      })
 
-      return JSON.parse(decrypt)
+      return parsedData
     } catch (err) {
       throw new Error('Invalid token')
     }

@@ -74,6 +74,7 @@ class Near {
     this.ctx = near
     this.masterAccount = await near.account(rootAccount.account_id)
     this.contractAccount = await near.account(contractAccount.account_id)
+    this.contract = new Contract(this.masterAccount, this.contractAccount.accountId, contractConfig)
     this.keyStore = keyStore
   }
 
@@ -94,6 +95,10 @@ class Near {
     const accExist = await this.checkAccount(accId)
     if (!accExist) {
       throw new Error(`Account ${accId} not exist`)
+    }
+    const loaded = this.accountsMap.get(accId)
+    if (loaded) {
+      return true
     }
     const keyPair = KeyPair.fromString(secretKey)
     await this.keyStore.setKey(config.networkId, accId, keyPair)
@@ -123,6 +128,9 @@ class Near {
     console.log('Setting up and deploying contract')
     const contractPath = join(process.cwd(), 'out/main.wasm')
     await this.contractAccount.deployContract(require('fs').readFileSync(contractPath))
+    await this.contract.init({
+      initialOwner: this.masterAccount.accountId
+    })
     console.log(`Contract ${this.contractAccount.accountId} deployed`)
   }
 }

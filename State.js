@@ -17,10 +17,6 @@ class State {
 
   async start() {
     await this.fetchData()
-    console.log('done wait 3sec')
-    // setTimeout(() => {
-    //   this.start()
-    // }, 3000)
   }
 
   async init() {
@@ -38,7 +34,7 @@ class State {
       // notify user about new/update comment on their post
       if (collection === 'comment') {
         if (data.postId) {
-          console.log('add notification')
+          // console.log('add notification')
           const post = await this.storage.db.collection('post').findOne({
             id: data.postId
           })
@@ -94,7 +90,7 @@ class State {
       id: event.params
     }
     const data = await this.account.viewFunction(this.contractName, methodName, args)
-    console.log(data)
+    // console.log(data)
     if (data) {
       this.processEvent(type, collection, data)
       if (type === 'create') {
@@ -134,7 +130,7 @@ class State {
       })
       const latestLen = await this.account.viewFunction(this.contractName, 'getEventLength')
       const currentLen = latestEvent ? latestEvent.value : 0
-      console.log(currentLen, latestLen)
+      console.log(`Syncing ${((currentLen/latestLen)*100).toPrecision(4)}%`)
       // if (currentLen === 0) {
       //   return
       // }
@@ -166,6 +162,9 @@ class State {
           await this.fetchData()
         }
       }
+      setTimeout(() => {
+        this.fetchData()
+      }, 3000)
     } catch (err) {
       console.log(err)
     }

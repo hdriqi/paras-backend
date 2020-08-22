@@ -148,6 +148,7 @@ class Auth {
         throw new Error(response.data.error)
       }
       if (response.data.result && response.data.result.error) {
+        console.log(response.data)
         throw new Error('Invalid username/seed')
       }
 

@@ -35,7 +35,7 @@ const main = async () => {
     await storage.init()
     await mail.init()
     await state.init()
-    await cron.init()
+    // await cron.init()
     await near.init()
   } catch (err) {
     console.log(err)

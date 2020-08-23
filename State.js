@@ -27,6 +27,10 @@ class State {
       throw 'CONTRACT_NAME is not defined on env'
     }
     this.contractName = process.env.CONTRACT_NAME
+    var args = process.argv.slice(2)
+    if (args[0]) {
+      this.contractName = args[0]
+    }
     this.__init__ = true
     this.near = await nearAPI.connect(config)
     this.account = await this.near.account(process.env.CONTRACT_NAME)
@@ -115,7 +119,7 @@ class State {
       })
     }
     await this.storage.kv.findOneAndUpdate({
-      key: 'latestEvent',
+      key: `${this.contractName}_latestEvent`,
     }, {
       $set: {
         value: parseInt(event.id)
@@ -127,13 +131,13 @@ class State {
 
   async fetchData() {
     try {
-      console.log('check new data')
+      console.log(`${this.contractName} check new data`)
       const latestEvent = await this.storage.kv.findOne({
-        key: 'latestEvent'
+        key: `${this.contractName}_latestEvent`
       })
       const latestLen = await this.account.viewFunction(this.contractName, 'getEventLength')
       const currentLen = latestEvent ? latestEvent.value : 0
-      console.log(`Syncing ${((currentLen/latestLen)*100).toPrecision(4)}%`)
+      console.log(`Syncing ${this.contractName} ${((currentLen / latestLen) * 100).toPrecision(4)}%`)
       // if (currentLen === 0) {
       //   return
       // }

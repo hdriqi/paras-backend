@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const rateLimit = require("express-rate-limit")
 
 const authenticate = require('./middleware/authenticate')
 const admin = require('./middleware/admin')
@@ -41,6 +42,11 @@ const main = async () => {
     process.exit(1)
   }
 
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100
+  })
+
   const feed = new Feed(state, storage)
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
@@ -49,6 +55,10 @@ const main = async () => {
   const auth = new Auth(state, storage, mail, near)
   const comment = new Comment(storage, near)
 
+  if (process.env.NODE_ENV === 'production') {
+    server.set('trust proxy', 1)
+    server.use(limiter)
+  }
   server.use(cors())
   server.use(bodyParser.urlencoded({ extended: true }))
   server.use(bodyParser.json())

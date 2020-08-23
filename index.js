@@ -19,6 +19,7 @@ const Verification = require('./controllers/Verification')
 const Explore = require('./controllers/Explore')
 const Wallet = require('./controllers/Wallet')
 const Auth = require('./controllers/Auth')
+const Comment = require('./controllers/Comment')
 
 const PORT = 9090
 const server = express()
@@ -46,6 +47,7 @@ const main = async () => {
   const explore = new Explore(state, storage)
   const wallet = new Wallet(storage, near)
   const auth = new Auth(state, storage, mail, near)
+  const comment = new Comment(storage, near)
 
   server.use(cors())
   server.use(bodyParser.urlencoded({ extended: true }))
@@ -212,11 +214,11 @@ const main = async () => {
     })
   })
 
-  server.post('/wallet/transfer', authenticate({ auth: auth}), async (req, res) => {
+  server.post('/wallet/transfer', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId
       if (!(userId && req.body.targetUserId && req.body.value)) {
-        throw new Error('Required [targetUserId, value]')
+        throw new Error('Required [body:targetUserId, body:value]')
       }
       const accountBalance = await wallet.transfer(userId, req.body.targetUserId, req.body.value, req.body.msg)
       return res.json({
@@ -227,10 +229,10 @@ const main = async () => {
       console.log(err)
       if (err.panic_msg) {
         if (err.panic_msg.includes('not enough tokens on account'))
-        return res.status(400).json({
-          success: 0,
-          message: 'Not enough tokens on account'
-        })
+          return res.status(400).json({
+            success: 0,
+            message: 'Not enough tokens on account'
+          })
       }
       return res.status(400).json({
         success: 0,
@@ -239,11 +241,11 @@ const main = async () => {
     }
   })
 
-  server.post('/wallet/piece', authenticate({ auth: auth}), async (req, res) => {
+  server.post('/wallet/piece', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId
       if (!(userId && req.body.postId && req.body.value)) {
-        throw new Error('Required [postId, value]')
+        throw new Error('Required [body:postId, body:value]')
       }
       const accountBalance = await wallet.piece(userId, req.body.postId, req.body.value)
       return res.json({
@@ -253,10 +255,10 @@ const main = async () => {
     } catch (err) {
       if (err.panic_msg) {
         if (err.panic_msg.includes('not enough tokens on account'))
-        return res.status(400).json({
-          success: 0,
-          message: 'Not enough tokens on account'
-        })
+          return res.status(400).json({
+            success: 0,
+            message: 'Not enough tokens on account'
+          })
       }
       return res.status(400).json({
         success: 0,
@@ -281,16 +283,51 @@ const main = async () => {
   })
 
   server.get('/comments', async (req, res) => {
-    const commentList = await storage.get('comment', req.query, [{
-      col: 'user',
-      key: 'owner',
-      targetCol: 'user',
-      targetKey: 'id'
-    }])
+    const commentList = await comment.get(req.query)
     return res.json({
       success: 1,
       data: commentList
     })
+  })
+
+  server.post('/comments', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.body.postId && req.body.body)) {
+        throw new Error('Required [body:postId, body:body]')
+      }
+      const commentList = await comment.create(userId, req.body.postId, req.body.body)
+      return res.json({
+        success: 1,
+        data: commentList
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.delete('/comments/:commentId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const commentId = req.params.commentId
+      // MF8UCMVL95h
+      if (!(userId && commentId)) {
+        throw new Error('Required [params:commentId]')
+      }
+      const commentList = await comment.delete(userId, commentId)
+      return res.json({
+        success: 1,
+        data: commentList
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/feeds', authenticate({ auth: auth }), async (req, res) => {

@@ -83,31 +83,6 @@ class Auth {
         updatedAt: new Date().getTime()
       })
 
-      const token = await this.login({
-        userId: authExist.userId,
-        seed: seedPhrase
-      })
-
-      // create account on smart contract
-      const avatar = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
-
-      const loadedAccount = this.near.accountsMap.get(authExist.userId)
-      const profile = await loadedAccount.contract.createUser({
-        imgAvatar: avatar,
-        bio: ''
-      })
-
-      // create personal memento for account
-      const mementoImg = DEFAULT_MEMENTO_IMG[0]
-      const newMementoData = {
-        name: 'timeline',
-        category: 'info',
-        img: mementoImg,
-        desc: 'My Timeline',
-        type: 'personal'
-      }
-      await loadedAccount.contract.createMemento(newMementoData)
-
       this.mail.send({
         from: `"Paras Team" <hello@paras.id>`,
         to: email,
@@ -116,9 +91,7 @@ class Auth {
       })
 
       return {
-        seedPassword: seedPhrase,
-        token: token,
-        profile: profile
+        seedPassword: seedPhrase
       }
     } catch (err) {
       console.log(err)
@@ -152,12 +125,46 @@ class Auth {
         throw new Error('Invalid username/seed')
       }
 
+      // check user exist on chain
+      await this.near.loadAccount({
+        userId: userId,
+        secretKey: secretKey
+      })
+      const loadedAccount = this.near.accountsMap.get(userId)
+      let profile = await loadedAccount.contract.getUserById({
+        id: userId
+      })
+
+      if (!profile) {
+        // create account on smart contract
+        const avatar = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
+
+        profile = await loadedAccount.contract.createUser({
+          imgAvatar: avatar,
+          bio: ''
+        })
+
+        // create personal memento for account
+        const mementoImg = DEFAULT_MEMENTO_IMG[0]
+        const newMementoData = {
+          name: 'timeline',
+          category: 'info',
+          img: mementoImg,
+          desc: 'My Timeline',
+          type: 'personal'
+        }
+        await loadedAccount.contract.createMemento(newMementoData)
+      }
+
       const token = this.cryptr.encrypt(JSON.stringify({
         userId: userId,
         secretKey: secretKey
       }))
 
-      return token
+      return {
+        token: token,
+        profile: profile
+      }
     } catch (err) {
       console.log(err)
       throw err

@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit")
 
 const authenticate = require('./middleware/authenticate')
 const admin = require('./middleware/admin')
+const multer = require('./middleware/multer')
 
 const State = require('./State')
 const Storage = require('./Storage')
@@ -67,6 +68,22 @@ const main = async () => {
     return res.json({
       success: 1
     })
+  })
+
+  server.post('/upload', multer.single('file'), async (req, res) => {
+    try {
+      const ipfsObj = await storage.upload(req.file)
+      return res.json({
+        success: 1,
+        data: ipfsObj
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.post('/register', async (req, res) => {

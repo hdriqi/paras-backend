@@ -1,11 +1,14 @@
 const MongoClient = require('mongodb').MongoClient
-var qpm = require('query-params-mongo')
-var processQuery = qpm()
+const qpm = require('query-params-mongo')
+const ipfsClient = require('ipfs-http-client')
+const { readFileSync, unlinkSync } = require('fs')
+const processQuery = qpm()
 
 class Storage {
   constructor() {
     const uri = `${process.env.MONGO_URL}?retryWrites=true&w=majority`
     this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    this.ipfs = ipfsClient({ host: 'ipfs-api.paras.id', port: '443', protocol: 'https' })
     this.ready = null
   }
 
@@ -37,7 +40,7 @@ class Storage {
     const iter = (await arr).map(x => x)
     const result = []
     for await (const d of iter) {
-      if (embed &&  embed.length > 0) {
+      if (embed && embed.length > 0) {
         for (const e of embed) {
           d[e.col] = await this.db.collection(e.targetCol).findOne({
             [e.targetKey]: d[e.key]
@@ -47,6 +50,17 @@ class Storage {
       result.push(d)
     }
     return result
+  }
+
+  async upload(input) {
+    const result = await this.ipfs.add({
+      content: readFileSync(input.path)
+    })
+    unlinkSync(input.path)
+    return {
+      url: result.path,
+      type: 'ipfs'
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 node_modules
 
 .next
+temp/*
 
 db.json
 /node_modules

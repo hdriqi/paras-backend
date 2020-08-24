@@ -52,13 +52,19 @@ class Storage {
     return result
   }
 
-  async upload(input) {
-    const result = await this.ipfs.add({
-      content: readFileSync(input.path)
-    })
-    unlinkSync(input.path)
+  async upload(input, type = 'file') {
+    let result = null
+    if (type === 'url') {
+      result = await this.ipfs.add(ipfsClient.urlSource(input))
+    }
+    else {
+      result = await this.ipfs.add({
+        content: readFileSync(input.path)
+      })
+      unlinkSync(input.path)
+    }
     return {
-      url: result.path,
+      url: result.cid.toString(),
       type: 'ipfs'
     }
   }

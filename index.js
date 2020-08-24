@@ -22,6 +22,7 @@ const Explore = require('./controllers/Explore')
 const Wallet = require('./controllers/Wallet')
 const Auth = require('./controllers/Auth')
 const Comment = require('./controllers/Comment')
+const Metascraper = require('./controllers/Metascraper')
 
 const PORT = 9090
 const server = express()
@@ -30,7 +31,7 @@ const main = async () => {
   const storage = new Storage()
   const mail = new Mail()
   const state = new State(storage)
-  const cron = new Cron(storage, mail)
+  // const cron = new Cron(storage, mail)
   const near = new Near()
   try {
     await storage.init()
@@ -55,6 +56,7 @@ const main = async () => {
   const wallet = new Wallet(storage, near)
   const auth = new Auth(state, storage, mail, near)
   const comment = new Comment(storage, near)
+  const metascraper = new Metascraper(storage)
 
   if (process.env.NODE_ENV === 'production') {
     server.set('trust proxy', 1)
@@ -67,6 +69,14 @@ const main = async () => {
   server.get('/', (req, res) => {
     return res.json({
       success: 1
+    })
+  })
+
+  server.get('/metaget', async (req, res) => {
+    const metadata = await metascraper.get(req.query.link)
+    return res.json({
+      success: 1,
+      data: metadata
     })
   })
 

@@ -240,6 +240,66 @@ const main = async () => {
     }
   })
 
+  server.put('/mementos/:mementoId/archieve', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId)) {
+        throw new Error('Required [params:mementoId]')
+      }
+      const updatedMemento = await memento.archieve(userId, {
+        mementoId: mementoId
+      })
+      return res.json({
+        success: 1,
+        data: updatedMemento
+      })
+    } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be archieved by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be archieved by owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.put('/mementos/:mementoId/unarchieve', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId)) {
+        throw new Error('Required [params:mementoId]')
+      }
+      const updatedMemento = await memento.unarchieve(userId, {
+        mementoId: mementoId
+      })
+      return res.json({
+        success: 1,
+        data: updatedMemento
+      })
+    } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be unarchieved by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be unarchieved by owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.delete('/mementos/:mementoId', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId

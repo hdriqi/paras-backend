@@ -37,7 +37,6 @@ class Memento {
   }
 
   async delete(userId, payload) {
-    console.log(payload)
     const loadedAccount = this.near.accountsMap.get(userId)
     const deletedMemento = await loadedAccount.contract.deleteMemento({
       id: payload.mementoId

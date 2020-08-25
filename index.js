@@ -214,6 +214,30 @@ const main = async () => {
     }
   })
 
+  server.put('/mementos/:mementoId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId && req.body.img && req.body.desc)) {
+        throw new Error('Required [params:mementoId, body:img, body:desc]')
+      }
+      const updatedMemento = await memento.update(userId, {
+        mementoId: mementoId,
+        img: req.body.img,
+        desc: req.body.desc
+      })
+      return res.json({
+        success: 1,
+        data: updatedMemento
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.delete('/mementos/:mementoId', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId

@@ -23,6 +23,7 @@ const Wallet = require('./controllers/Wallet')
 const Auth = require('./controllers/Auth')
 const Comment = require('./controllers/Comment')
 const Metascraper = require('./controllers/Metascraper')
+const Memento = require('./controllers/Memento')
 
 const PORT = 9090
 const server = express()
@@ -56,6 +57,7 @@ const main = async () => {
   const wallet = new Wallet(storage, near)
   const auth = new Auth(state, storage, mail, near)
   const comment = new Comment(storage, near)
+  const memento = new Memento(storage, near)
   const metascraper = new Metascraper(storage)
 
   if (process.env.NODE_ENV === 'production') {
@@ -186,6 +188,52 @@ const main = async () => {
       success: 1,
       data: mementoList
     })
+  })
+
+  server.post('/mementos', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      console.log(userId)
+      if (!(userId && req.body.name && req.body.category && req.body.type)) {
+        throw new Error('Required [body:name, body:category, body:type]')
+      }
+      const newMemento = await memento.create(userId, {
+        name: req.body.name,
+        category: req.body.category,
+        type: req.body.type
+      })
+      return res.json({
+        success: 1,
+        data: newMemento
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.delete('/mementos/:mementoId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId)) {
+        throw new Error('Required [params:mementoId]')
+      }
+      const delMemento = await memento.delete(userId, {
+        mementoId: mementoId
+      })
+      return res.json({
+        success: 1,
+        data: delMemento
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/posts', async (req, res) => {

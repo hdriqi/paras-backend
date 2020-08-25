@@ -137,9 +137,13 @@ class Near {
     console.log('Setting up and deploying contract')
     const contractPath = join(process.cwd(), 'out/main.wasm')
     await this.contractAccount.deployContract(require('fs').readFileSync(contractPath))
-    await this.contract.init({
-      initialOwner: this.masterAccount.accountId
-    })
+    try {
+      await this.contract.init({
+        initialOwner: this.masterAccount.accountId
+      })
+    } catch (err) {
+      console.log(err)
+    }
     console.log(`Contract ${this.contractAccount.accountId} deployed`)
   }
 }

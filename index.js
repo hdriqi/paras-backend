@@ -278,6 +278,33 @@ const main = async () => {
     }
   })
 
+  server.post('/wallet/near/transfer', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.body.targetUserId && req.body.value)) {
+        throw new Error('Required [body:targetUserId, body:value]')
+      }
+      const accountBalance = await wallet.transferNear(userId, req.body.targetUserId, req.body.value)
+      return res.json({
+        success: 1,
+        data: accountBalance
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('not enough tokens on account'))
+          return res.status(400).json({
+            success: 0,
+            message: 'Not enough tokens on account'
+          })
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.post('/wallet/piece', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId

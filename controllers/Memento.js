@@ -6,6 +6,22 @@ class Memento {
     this.near = near
   }
 
+  async get(query) {
+    try {
+      const mementoList = await this.storage.get('memento', query, [{
+        col: 'user',
+        key: 'owner',
+        targetCol: 'user',
+        targetKey: 'id'
+      }])
+      
+      return mementoList
+    } catch (err) {
+      console.log(err)
+      throw err
+    }
+  }
+
   async create(userId, payload) {
     try {
       const mementoImg = DEFAULT_MEMENTO_IMG[0]

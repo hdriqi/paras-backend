@@ -178,12 +178,7 @@ const main = async () => {
   })
 
   server.get('/mementos', async (req, res) => {
-    const mementoList = await storage.get('memento', req.query, [{
-      col: 'user',
-      key: 'owner',
-      targetCol: 'user',
-      targetKey: 'id'
-    }])
+    const mementoList = await memento.get(req.query)
     return res.json({
       success: 1,
       data: mementoList
@@ -193,7 +188,6 @@ const main = async () => {
   server.post('/mementos', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId
-      console.log(userId)
       if (!(userId && req.body.name && req.body.category && req.body.type)) {
         throw new Error('Required [body:name, body:category, body:type]')
       }

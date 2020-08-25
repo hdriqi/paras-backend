@@ -1,4 +1,4 @@
-const { Contract, KeyPair, connect } = require('near-api-js')
+const { Contract, KeyPair, connect, Account } = require('near-api-js')
 const { join } = require('path')
 const { InMemoryKeyStore, MergeKeyStore } = require('near-api-js').keyStores
 const { parseNearAmount } = require('near-api-js').utils.format
@@ -58,7 +58,7 @@ class Near {
     const rootAccount = JSON.parse(process.env.ROOT_ACCOUNT)
     const contractAccount = JSON.parse(process.env.CONTRACT_ACCOUNT)
     const keyStore = new InMemoryKeyStore()
-    
+
     const rootKeyPair = KeyPair.fromString(rootAccount.secret_key || rootAccount.private_key)
     await keyStore.setKey(config.networkId, rootAccount.account_id, rootKeyPair)
 
@@ -102,10 +102,12 @@ class Near {
     }
     const keyPair = KeyPair.fromString(secretKey)
     await this.keyStore.setKey(config.networkId, accId, keyPair)
+    new Account()
     const contract = new Contract(accExist, this.contractAccount.accountId, contractConfig)
 
     this.accountsMap.set(accId, {
       publicKey: keyPair.getPublicKey().toString(),
+      account: new Account(config, accId),
       contract: contract
     })
 
@@ -128,10 +130,15 @@ class Near {
       throw new Error(`Account ${newAccId} already exist`)
     }
     const keyPair = KeyPair.fromString(secretKey)
-    const newAccount = await this.masterAccount.createAccount(newAccId, keyPair.publicKey.toString(), parseNearAmount('0.1'))
+    const newAccount = await this.masterAccount.createAccount(newAccId, keyPair.publicKey.toString(), parseNearAmount('1'))
     await this.loadAccount({ userId, secretKey })
     return newAccount
   }
+
+  // async getAccountBalance({ userId }) {
+  //   await this.masterAccount.sendMoney(userId, parseNearAmount(value))
+  //   await getAccountBalance
+  // }
 
   async deployContract() {
     console.log('Setting up and deploying contract')

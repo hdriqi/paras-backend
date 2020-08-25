@@ -196,7 +196,7 @@ export function updateMemento(
 	if (memento) {
 		assert(
 			memento.owner == context.sender,
-			'Memento can only be deleted by owner'
+			'Memento can only be updated by owner'
 		)
 		memento.img = img
 		memento.desc = desc
@@ -219,7 +219,7 @@ export function archiveMemento(
 	if (memento) {
 		assert(
 			memento.owner == context.sender,
-			'Memento can only be deleted by owner'
+			'Memento can only be archieved by owner'
 		)
 		memento.isArchive = true
 
@@ -241,7 +241,7 @@ export function unarchiveMemento(
 	if (memento) {
 		assert(
 			memento.owner == context.sender,
-			'Memento can only be deleted by owner'
+			'Memento can only be unarchieved by owner'
 		)
 		memento.isArchive = false
 

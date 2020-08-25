@@ -225,6 +225,14 @@ const main = async () => {
         data: updatedMemento
       })
     } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be updated by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be updated by owner'
+          })
+        }
+      }
       return res.status(400).json({
         success: 0,
         message: err.message
@@ -247,6 +255,14 @@ const main = async () => {
         data: delMemento
       })
     } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be deleted by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be deleted by owner'
+          })
+        }
+      }
       return res.status(400).json({
         success: 0,
         message: err.message

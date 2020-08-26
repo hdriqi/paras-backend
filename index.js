@@ -24,6 +24,7 @@ const Auth = require('./controllers/Auth')
 const Comment = require('./controllers/Comment')
 const Metascraper = require('./controllers/Metascraper')
 const Memento = require('./controllers/Memento')
+const Post = require('./controllers/Post')
 
 const PORT = 9090
 const server = express()
@@ -58,6 +59,7 @@ const main = async () => {
   const auth = new Auth(state, storage, mail, near)
   const comment = new Comment(storage, near)
   const memento = new Memento(storage, near)
+  const post = new Post(storage, near)
   const metascraper = new Metascraper(storage)
 
   if (process.env.NODE_ENV === 'production') {
@@ -331,21 +333,196 @@ const main = async () => {
   })
 
   server.get('/posts', async (req, res) => {
-    const postList = await storage.get('post', req.query, [{
-      col: 'memento',
-      key: 'mementoId',
-      targetCol: 'memento',
-      targetKey: 'id'
-    }, {
-      col: 'user',
-      key: 'owner',
-      targetCol: 'user',
-      targetKey: 'id'
-    }])
-    return res.json({
-      success: 1,
-      data: postList
-    })
+    try {
+      const postList = await post.get(req.query)
+      return res.json({
+        success: 1,
+        data: postList
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.post('/posts', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.body.contentList && req.body.mementoId)) {
+        throw new Error('Required [body:contentList, body:mementoId]')
+      }
+      const newPost = await post.create(userId, {
+        contentList: req.body.contentList,
+        mementoId: req.body.mementoId,
+      })
+      return res.json({
+        success: 1,
+        data: newPost
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Cannot write to archived Memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Cannot write to archived Memento'
+          })
+        }
+        if (err.panic_msg.includes('Sender does not have access to write to this memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Sender does not have access to write to this memento'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.put('/posts/:postId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.params.postId && req.body.contentList && req.body.mementoId)) {
+        throw new Error('Required [params:postId, body:contentList, body:mementoId]')
+      }
+      const newPost = await post.update(userId, {
+        postId: req.params.postId,
+        contentList: req.body.contentList,
+        mementoId: req.body.mementoId,
+      })
+      return res.json({
+        success: 1,
+        data: newPost
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Cannot write to archived Memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Cannot write to archived Memento'
+          })
+        }
+        if (err.panic_msg.includes('Sender does not have access to write to this memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Sender does not have access to write to this memento'
+          })
+        }
+        if (err.panic_msg.includes('Post can only be updated by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Post can only be updated by owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.put('/posts/:postId/redact', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.params.postId)) {
+        throw new Error('Required [params:postId]')
+      }
+      const newPost = await post.redact(userId, {
+        postId: req.params.postId
+      })
+      return res.json({
+        success: 1,
+        data: newPost
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Post can only be redacted by memento owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Post can only be redacted by memento owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.post('/posts/:postId/transmit', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.params.postId && req.body.mementoId)) {
+        throw new Error('Required [params:postId, body:mementoId]')
+      }
+      const newPost = await post.transmit(userId, {
+        postId: req.params.postId,
+        mementoId: req.body.mementoId
+      })
+      return res.json({
+        success: 1,
+        data: newPost
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Cannot write to archived Memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Cannot write to archived Memento'
+          })
+        }
+        if (err.panic_msg.includes('Sender does not have access to write to this memento')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Sender does not have access to write to this memento'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.delete('/posts/:postId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.params.postId)) {
+        throw new Error('Required [params:postId]')
+      }
+      const newPost = await post.delete(userId, {
+        postId: req.params.postId
+      })
+      return res.json({
+        success: 1,
+        data: newPost
+      })
+    } catch (err) {
+      console.log(err)
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Post can only be deleted by post owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Post can only be deleted by post owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/transactions', async (req, res) => {
@@ -376,7 +553,7 @@ const main = async () => {
     const postList = await explore.getPost()
     return res.json({
       success: 1,
-      data: postList
+      data: newPostList
     })
   })
 

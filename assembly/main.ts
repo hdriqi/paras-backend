@@ -292,14 +292,14 @@ export function createPost(
 			'Sender does not have access to write to this memento'
 		)
 		const post = new Post(contentList, mementoId, null)
-	
+
 		postCollection.set(post.id, post)
 		post.memento = memento
 		post.user = getUserById(post.owner)
-	
+
 		const ev = new Event('post_create', post.id)
 		events.push(ev)
-	
+
 		return post
 	}
 	return null
@@ -310,7 +310,17 @@ export function transmitPost(
 	mementoId: string
 ): Post | null {
 	const post = getPostById(id)
-	if (post) {
+	const memento = getMementoById(mementoId)
+	if (post && memento) {
+		assert(
+			!memento.isArchive,
+			'Cannot write to archived Memento'
+		)
+		assert(
+			memento.type == 'public' || memento.type == 'personal' && memento.owner == context.sender,
+			'Sender does not have access to write to this memento'
+		)
+
 		const newPost = new Post(post.contentList, mementoId, post.originalId)
 
 		postCollection.set(newPost.id, newPost)
@@ -325,7 +335,7 @@ export function transmitPost(
 	return null
 }
 
-export function editPost(
+export function updatePost(
 	id: string,
 	contentList: Content[],
 	mementoId: string
@@ -334,8 +344,16 @@ export function editPost(
 	const memento = getMementoById(mementoId)
 	if (!!post && !!memento) {
 		assert(
+			!memento.isArchive,
+			'Cannot write to archived Memento'
+		)
+		assert(
+			memento.type == 'public' || memento.type == 'personal' && memento.owner == context.sender,
+			'Sender does not have access to write to this memento'
+		)
+		assert(
 			post.owner == context.sender,
-			'Post can only be edited by owner'
+			'Post can only be updated by owner'
 		)
 		post.contentList = contentList
 		post.mementoId = mementoId
@@ -392,7 +410,7 @@ export function deletePost(
 	if (post) {
 		assert(
 			post.owner == context.sender,
-			'Post can only be deleted by post owner or memento owner'
+			'Post can only be deleted by post owner'
 		)
 
 		postCollection.delete(post.id)

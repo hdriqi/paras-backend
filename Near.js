@@ -25,7 +25,7 @@ const contractConfig = {
     'deleteMemento',
     'createPost',
     'transmitPost',
-    'editPost',
+    'updatePost',
     'deletePost',
     'redactPost',
     'toggleFollow',

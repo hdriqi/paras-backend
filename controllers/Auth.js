@@ -62,7 +62,7 @@ class Auth {
       throw new Error('Invalid PIN/Email')
     }
     const currentTime = new Date().getTime()
-    if (currentTime > authExist.expiredAt) {
+    if (currentTime > Number(authExist.expiredAt)) {
       throw new Error('Expired PIN')
     }
 

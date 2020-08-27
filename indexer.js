@@ -2,10 +2,12 @@ require('dotenv').config()
 
 const State = require('./State')
 const Storage = require('./Storage')
+const Notification = require('./controllers/Notification')
 
 const main = async () => {
   const storage = new Storage()
-  const state = new State(storage)
+  const notification = new Notification(storage)
+  const state = new State(storage, notification)
   
   try {
     await storage.init()

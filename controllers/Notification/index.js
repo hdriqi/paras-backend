@@ -1,11 +1,15 @@
 const gcm = require('node-gcm')
 const NotificationComment = require('./NotificationComment')
+const NotificationPost = require('./NotificationPost')
 
 class Notification {
   constructor(storage) {
     this.storage = storage
-    this.sender = new gcm.sender(process.env.GCM_SENDER_KEY)
+    this.sender = new gcm.Sender(process.env.GCM_SENDER_KEY)
     this.notifyComment = new NotificationComment(storage)
+    this.notifyPost = new NotificationPost(storage)
+
+    this.send = this.send.bind(this)
   }
 
   async register(userId, deviceId, type) {
@@ -13,8 +17,8 @@ class Notification {
       id: deviceId,
       userId: userId,
       type: type,
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime()
+      createdAt: new Date().getTime().toString(),
+      updatedAt: new Date().getTime().toString()
     })
 
     return newDevice
@@ -26,15 +30,15 @@ class Notification {
       userId: userId
     })
     const devices = await devicesPtr.toArray()
-    const androidDeviceIds = devices.filter(dev => dev.type === 'android').map(dev => dev.id)
-    this.sendAndroid(androidDeviceIds, data, notification)
-
-    // const iOSDevices = devices.filter(dev => dev.type === 'ios').map(dev => dev.id)
-    // this.sendIos(iOSDevices)
+    const deviceIds = devices.filter(dev => dev.type === 'android').map(dev => dev.id)
+    this.sendPushNotification(deviceIds, data, notification)
   }
 
-  sendAndroid(deviceIds, data, notification) {
+  sendPushNotification(deviceIds, data, notification) {
     let message = new gcm.Message({
+      priority: 'high',
+      dryRun: true,
+      contentAvailable: true,
       data: data,
       notification: notification
       // data: {
@@ -51,6 +55,7 @@ class Notification {
     this.sender.send(message, {
       registrationTokens: deviceIds
     }, function (err, response) {
+      console.log('gcm')
       if (err) {
         console.error(err)
       } else {
@@ -61,14 +66,13 @@ class Notification {
     })
   }
 
-  sendIos(deviceIds) {
-
-  }
-
-  processEvent(type, collection, data) {
+  async processEvent(type, collection, data) {
     if (type === 'create') {
       if (collection === 'comment') {
         this.notifyComment.create(data, this.send)
+      }
+      if (collection === 'post') {
+        this.notifyPost.create(data, this.send)
       }
     }
   }

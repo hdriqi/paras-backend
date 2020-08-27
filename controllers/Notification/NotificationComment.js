@@ -3,7 +3,7 @@ class NotificationComment {
     this.storage = storage
   }
 
-  create(data, send) {
+  async create(data, send) {
     if (data.postId) {
       // console.log('add notification')
       const post = await this.storage.db.collection('post').findOne({
@@ -13,7 +13,7 @@ class NotificationComment {
         link: `${process.env.FRONTEND_URL}/post/${data.postId}/comment`,
         message: `${data.owner} commented on your post`,
         userId: post.owner,
-        createdAt: new Date().getTime()
+        createdAt: new Date().getTime().toString()
       }
       await this.storage.db.collection('notification').insertOne(newNotification)
       // data: {
@@ -60,7 +60,7 @@ class NotificationComment {
           link: `${process.env.FRONTEND_URL}/post/${data.postId}/comment`,
           message: `${data.owner} mentioned you in a comment`,
           userId: user,
-          createdAt: new Date().getTime()
+          createdAt: new Date().getTime().toString()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
         send(user, {

@@ -25,6 +25,7 @@ const Comment = require('./controllers/Comment')
 const Metascraper = require('./controllers/Metascraper')
 const Memento = require('./controllers/Memento')
 const Post = require('./controllers/Post')
+const Notification = require('./controllers/Notification')
 
 const PORT = 9090
 const server = express()
@@ -61,6 +62,7 @@ const main = async () => {
   const memento = new Memento(storage, near)
   const post = new Post(storage, near)
   const metascraper = new Metascraper(storage)
+  const notification = new Notification(storage)
 
   if (process.env.NODE_ENV === 'production') {
     server.set('trust proxy', 1)
@@ -835,31 +837,16 @@ const main = async () => {
     }
   })
 
-  server.get('/register', authenticate({ auth: auth }), async (req, res) => {
+  server.post('/register/device', authenticate({ auth: auth }), async (req, res) => {
     try {
-      const user = await verification.checkRegister(req.userId)
-      return res.json({
-        success: 1,
-        data: user
+      const userId = req.userId
+      if (!(userId && req.body.deviceId && req.body.type)) {
+        throw new Error('Required [body:deviceId, body:type]')
+      }
+      await notification.register(userId, {
+        deviceId: req.body.deviceId,
+        type: req.body.type
       })
-    } catch (err) {
-      console.log(err)
-      return res.status(400).json({
-        success: 0,
-        message: err
-      })
-    }
-  })
-
-  server.post('/register', authenticate({ auth: auth }), async (req, res) => {
-    const {
-      email,
-      fullName,
-      referral,
-    } = req.body
-
-    try {
-      await verification.register(req.userId, email, fullName, referral)
       return res.json({
         success: 1,
         data: true

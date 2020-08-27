@@ -12,11 +12,11 @@ class Notification {
     this.send = this.send.bind(this)
   }
 
-  async register(userId, deviceId, type) {
+  async register(userId, payload) {
     const newDevice = await this.storage.db.collection('device').insertOne({
-      id: deviceId,
       userId: userId,
-      type: type,
+      id: payload.deviceId,
+      type: payload.type,
       createdAt: new Date().getTime().toString(),
       updatedAt: new Date().getTime().toString()
     })

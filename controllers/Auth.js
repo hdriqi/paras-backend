@@ -79,6 +79,7 @@ class Auth {
         userId: authExist.userId,
         publicKey: publicKey,
         email: email,
+        deviceIds: [],
         createdAt: new Date().getTime(),
         updatedAt: new Date().getTime()
       })

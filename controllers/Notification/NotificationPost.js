@@ -19,8 +19,12 @@ class NotificationPost {
         id: data.mementoId
       })
       if (memento && memento.owner !== data.owner) {
+        const payload = {
+          screen: 'post',
+          id: data.id
+        }
         const newNotification = {
-          link: `${process.env.FRONTEND_URL}/post/${data.id}`,
+          payload: payload,
           message: `${data.owner} create new post in ${memento.id}`,
           userId: memento.owner,
           createdAt: new Date().getTime().toString()
@@ -28,10 +32,7 @@ class NotificationPost {
         await this.storage.db.collection('notification').insertOne(newNotification)
         console.log(`send notification to ${memento.owner} with message ${newNotification.message}`)
         try {
-          send(memento.owner, {
-            screen: 'post',
-            id: data.id
-          }, {
+          send(memento.owner, payload, {
             title: 'Paras',
             icon: 'ic_launcher',
             body: newNotification.message
@@ -49,8 +50,12 @@ class NotificationPost {
         id: data.originalId
       })
       if (originalPost && originalPost.owner !== data.owner) {
+        const payload = {
+          screen: 'post',
+          id: data.id
+        }
         const newNotification = {
-          link: `${process.env.FRONTEND_URL}/post/${data.id}`,
+          payload: payload,
           message: `${data.owner} transmitted your post`,
           userId: originalPost.owner,
           createdAt: new Date().getTime().toString()
@@ -58,10 +63,7 @@ class NotificationPost {
         await this.storage.db.collection('notification').insertOne(newNotification)
         console.log(`send notification to ${originalPost.owner} with message ${newNotification.message}`)
         try {
-          send(originalPost.owner, {
-            screen: 'post',
-            id: data.id
-          }, {
+          send(originalPost.owner, payload, {
             title: 'Paras',
             icon: 'ic_launcher',
             body: newNotification.message
@@ -97,17 +99,18 @@ class NotificationPost {
     const distinctUsers = [...new Set(mentionedUsers)]
     // create new notification
     for await (const user of distinctUsers) {
+      const payload = {
+        screen: 'post',
+        id: data.postId
+      }
       const newNotification = {
-        link: `${process.env.FRONTEND_URL}/post/${data.postId}`,
+        payload: payload,
         message: `${data.owner} mentioned you in a post`,
         userId: user,
         createdAt: new Date().getTime().toString()
       }
       await this.storage.db.collection('notification').insertOne(newNotification)
-      send(user, {
-        screen: 'post',
-        id: data.postId
-      }, {
+      send(user, payload, {
         title: 'Paras',
         icon: 'ic_launcher',
         body: `${data.owner} mentioned you in a post`

@@ -9,26 +9,18 @@ class NotificationComment {
       const post = await this.storage.db.collection('post').findOne({
         id: data.postId
       })
+      const payload = {
+        screen: 'comment',
+        id: data.postId
+      }
       const newNotification = {
-        link: `${process.env.FRONTEND_URL}/post/${data.postId}/comment`,
+        payload: payload,
         message: `${data.owner} commented on your post`,
         userId: post.owner,
         createdAt: new Date().getTime().toString()
       }
       await this.storage.db.collection('notification').insertOne(newNotification)
-      // data: {
-      //   screen: 'message1',
-      //   id: 'message2'
-      // },
-      // notification: {
-      //   title: "Hello, World",
-      //   icon: "ic_launcher",
-      //   body: "This is a notification that will be displayed if your app is in the background."
-      // }
-      send(post.owner, {
-        screen: 'comment',
-        id: data.postId
-      }, {
+      send(post.owner, payload, {
         title: 'Paras',
         icon: 'ic_launcher',
         body: `${data.owner} commented on your post`
@@ -56,17 +48,18 @@ class NotificationComment {
       const distinctUsers = [...new Set(mentionedUsers)]
       // create new notification
       for await (const user of distinctUsers) {
+        const payload = {
+          screen: 'comment',
+          id: data.postId
+        }
         const newNotification = {
-          link: `${process.env.FRONTEND_URL}/post/${data.postId}/comment`,
+          payload: payload,
           message: `${data.owner} mentioned you in a comment`,
           userId: user,
           createdAt: new Date().getTime().toString()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
-        send(user, {
-          screen: 'comment',
-          id: data.postId
-        }, {
+        send(user, payload, {
           title: 'Paras',
           icon: 'ic_launcher',
           body: `${data.owner} mentioned you in a comment`

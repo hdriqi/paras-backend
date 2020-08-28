@@ -66,13 +66,18 @@ class Notification {
     })
   }
 
-  async processEvent(type, collection, data) {
+  async processEvent(type, collection, action, params, data) {
     if (type === 'create') {
       if (collection === 'comment') {
         this.notifyComment.create(data, this.send)
       }
       if (collection === 'post') {
         this.notifyPost.create(data, this.send)
+      }
+    }
+    if (type === 'update') {
+      if (collection === 'post') {
+        this.notifyPost.update(data, this.send, params)
       }
     }
   }

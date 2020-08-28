@@ -381,14 +381,17 @@ export function redactPost(
 			'Post can only be redacted by memento owner'
 		)
 
-		post.mementoId = ''
-		postCollection.set(post.id, post)
-		post.user = getUserById(post.owner)
-
-		const ev = new Event('post_update', post.id)
-		events.push(ev)
-
-		return post
+		if (memento) {
+			post.mementoId = ''
+			postCollection.set(post.id, post)
+			post.user = getUserById(post.owner)
+	
+			const params = [post.id, memento.id]
+			const ev = new Event('post_update_redact', params.join('_'))
+			events.push(ev)
+	
+			return post
+		}
 	}
 	return null
 }

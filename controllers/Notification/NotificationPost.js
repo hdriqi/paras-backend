@@ -117,6 +117,40 @@ class NotificationPost {
       })
     }
   }
+
+  async update(data, send, params) {
+    // if post is redacted
+    if (!data.mementoId) {
+      // params = [id, mementoId]
+      const [postId, mementoId] = params
+      const memento = await this.storage.db.collection('memento').findOne({
+        id: mementoId
+      })
+      if (memento && memento.owner !== data.owner) {
+        const payload = {
+          screen: 'post',
+          id: postId
+        }
+        const newNotification = {
+          payload: payload,
+          message: `Your post has been redacted from ${mementoId}`,
+          userId: data.owner,
+          createdAt: new Date().getTime().toString()
+        }
+        await this.storage.db.collection('notification').insertOne(newNotification)
+        console.log(`send notification to ${data.owner} with message ${newNotification.message}`)
+        try {
+          send(data.owner, payload, {
+            title: 'Paras',
+            icon: 'ic_launcher',
+            body: newNotification.message
+          })
+        } catch (err) {
+          console.log(err)
+        }
+      }
+    }
+  }
 }
 
 module.exports = NotificationPost

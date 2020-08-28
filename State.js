@@ -39,16 +39,16 @@ class State {
 
   async handleEvent(event) {
     // id, msg, params
-    const [collection, type] = event.msg.split('_')
+    const [collection, type, action] = event.msg.split('_')
     const collectionCapitalize = collection.charAt(0).toUpperCase() + collection.slice(1)
     const methodName = `get${collectionCapitalize}ById`
+    const params = event.params.split('_')
     const args = {
-      id: event.params
+      id: params[0]
     }
     const data = await this.account.viewFunction(this.contractName, methodName, args)
-    // console.log(data)
     if (data) {
-      this.notification.processEvent(type, collection, data)
+      this.notification.processEvent(type, collection, action, params, data)
       // this.processEvent(type, collection, data)
       if (type === 'create') {
         await this.storage.db.collection(collection).insertOne(data)

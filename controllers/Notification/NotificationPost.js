@@ -122,7 +122,7 @@ class NotificationPost {
     // if post is redacted
     if (!data.mementoId) {
       // params = [id, mementoId]
-      const [postId, mementoId] = params
+      const [postId, mementoId] = params.split('_')
       const memento = await this.storage.db.collection('memento').findOne({
         id: mementoId
       })

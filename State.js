@@ -37,18 +37,16 @@ class State {
     this.account = await this.near.account(process.env.CONTRACT_NAME)
   }
 
-  async handleEvent(event) {
-    // id, msg, params
-    const [collection, type, action] = event.msg.split('_')
+  async updateDatabase(msg, params) {
+    const [collection, type] = msg.split('_')
     const collectionCapitalize = collection.charAt(0).toUpperCase() + collection.slice(1)
     const methodName = `get${collectionCapitalize}ById`
-    const params = event.params.split('_')
+    const _params = params.split('_')
     const args = {
-      id: params[0]
+      id: _params[0]
     }
     const data = await this.account.viewFunction(this.contractName, methodName, args)
     if (data) {
-      this.notification.processEvent(type, collection, action, params, data)
       // this.processEvent(type, collection, data)
       if (type === 'create') {
         await this.storage.db.collection(collection).insertOne(data)
@@ -68,6 +66,17 @@ class State {
         id: event.params
       })
     }
+    return data
+  }
+
+  async handleEvent(event) {
+    let data = null
+    if (event.msg[0] === 'piece') {
+      await this.notification.processEvent(event.msg, event.params)
+    }
+    else {
+      data = await this.updateDatabase(event.msg, event.params)
+    }
     await this.storage.kv.findOneAndUpdate({
       key: `${this.contractName}_latestEvent`,
     }, {
@@ -77,6 +86,7 @@ class State {
     }, {
       upsert: true
     })
+    this.notification.processEvent(event.msg, event.params, data)
   }
 
   async fetchData() {

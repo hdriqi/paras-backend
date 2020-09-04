@@ -158,7 +158,7 @@ export function createMemento(
 		type == 'public' || type == 'personal',
 		'Memento type must be public or personal'
 	)
-	const cleanedName = name.replace(' ', '').toLowerCase()
+	const cleanedName = name.replaceAll(' ', '').replaceAll('::', '').toLowerCase()
 	const memento = new Memento(cleanedName, category, img, desc, type)
 
 	// check if memento id already taken

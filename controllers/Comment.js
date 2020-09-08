@@ -1,3 +1,5 @@
+const shortid = require('shortid')
+
 class Comment {
   constructor(storage, near) {
     this.storage = storage
@@ -12,7 +14,7 @@ class Comment {
         targetCol: 'user',
         targetKey: 'id'
       }])
-      
+
       return commentList
     } catch (err) {
       console.log(err)
@@ -21,11 +23,22 @@ class Comment {
   }
 
   async create(userId, postId, body) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const newComment = await loadedAccount.contract.createComment({
+    const id = shortid.generate()
+    const newCommentData = {
+      id: id,
       postId: postId,
-      body: body
+      body: body,
+      owner: userId,
+      createdAt: new Date().getTime()
+    }
+    const newData = await this.storage.db.collection('comment').insertOne(newCommentData)
+    const newComment = newData.ops[0]
+
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
     })
+    newComment.user = user
+
     return newComment
   }
 

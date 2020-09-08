@@ -52,7 +52,7 @@ class Memento {
         id: userId
       })
       await this.storage.db.collection('memento').insertOne(newMementoData)
-      
+
       newMementoData.user = user
       return newMementoData
     } catch (err) {
@@ -62,14 +62,36 @@ class Memento {
   }
 
   async update(userId, payload) {
-    const newMementoData = {
-      id: payload.mementoId,
-      img: payload.img,
-      desc: payload.desc
+    const exist = await this.get({
+      id: payload.mementoId
+    })
+
+    if (exist.length === 0) {
+      throw new Error('Memento not exist')
     }
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const updatedMementoData = await loadedAccount.contract.updateMemento(newMementoData)
-    return updatedMementoData
+
+    if (exist[0].owner !== userId) {
+      throw new Error('Memento can only be updated by owner')
+    }
+
+    const { value: updateMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
+      id: payload.mementoId,
+      owner: userId
+    }, {
+      $set: {
+        img: payload.img,
+        desc: payload.desc,
+        updatedAt: new Date().getTime()
+      }
+    }, {
+      returnOriginal: false
+    })
+
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
+    })
+    updateMementoData.user = user
+    return updateMementoData
   }
 
   async delete(userId, payload) {

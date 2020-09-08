@@ -1,4 +1,5 @@
-const { parseNearAmount } = require('near-api-js/lib/utils/format')
+const JSBI = require('jsbi')
+const shortid = require('shortid')
 
 class Balance {
   constructor(storage, near) {
@@ -8,10 +9,13 @@ class Balance {
 
   async get(userId) {
     try {
-      const balance = await this.near.contract.balanceOf({
-        tokenOwner: userId
+      const balance = await this.storage.db.collection('balance').findOne({
+        owner: userId
       })
-      return balance
+      if (!balance) {
+        return '0'
+      }
+      return balance.value
     } catch (err) {
       console.log(err)
       throw err
@@ -27,11 +31,38 @@ class Balance {
     return latestBalance
   }
 
-  async transfer(userId, targetUserId, value, msg = '') {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    await loadedAccount.contract.transfer({
-      to: targetUserId,
-      tokens: value,
+  async transfer(userId, receiverId, value, msg = '') {
+    const fromBalance = JSBI.BigInt(await this.get(userId))
+    const toBalance = JSBI.BigInt(await this.get(receiverId))
+    const tokens = JSBI.BigInt(value)
+    console.log(fromBalance.toString())
+    if (!JSBI.greaterThanOrEqual(fromBalance, tokens)) {
+      throw new Error('Not enough tokens on account')
+    }
+
+    await this.storage.db.collection('balance').findOneAndUpdate({
+      owner: userId
+    }, {
+      $set: {
+        value: JSBI.subtract(fromBalance, tokens).toString()
+      }
+    }, {
+      upsert: true
+    })
+    await this.storage.db.collection('balance').findOneAndUpdate({
+      owner: receiverId
+    }, {
+      $set: {
+        value: JSBI.add(toBalance, tokens).toString()
+      }
+    }, {
+      upsert: true
+    })
+    await this.storage.db.collection('transaction').insertOne({
+      id: shortid.generate(),
+      from: userId,
+      to: receiverId,
+      value: value,
       msg: msg
     })
     const latestBalance = this.get(userId)

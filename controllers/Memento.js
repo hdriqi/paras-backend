@@ -74,7 +74,7 @@ class Memento {
       throw new Error('Memento can only be updated by owner')
     }
 
-    const { value: updateMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
+    const { value: updatedMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
       id: payload.mementoId,
       owner: userId
     }, {
@@ -90,16 +90,28 @@ class Memento {
     const user = await this.storage.db.collection('user').findOne({
       id: userId
     })
-    updateMementoData.user = user
-    return updateMementoData
+    updatedMementoData.user = user
+    return updatedMementoData
   }
 
   async delete(userId, payload) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const deletedMemento = await loadedAccount.contract.deleteMemento({
+    const exist = await this.get({
       id: payload.mementoId
     })
-    return deletedMemento
+
+    if (exist.length === 0) {
+      throw new Error('Memento not exist')
+    }
+
+    if (exist[0].owner !== userId) {
+      throw new Error('Memento can only be deleted by owner')
+    }
+
+    await this.storage.db.collection('memento').deleteOne({
+      id: payload.mementoId
+    })
+
+    return exist[0]
   }
 
   async archieve(userId, payload) {

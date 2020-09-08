@@ -55,11 +55,21 @@ class Post {
       const newData = await this.storage.db.collection('post').insertOne(newPostData)
       const newPost = newData.ops[0]
 
+      const { value: newMemento } = await this.storage.db.collection('memento').findOneAndUpdate({
+        id: payload.mementoId
+      }, {
+        $set: {
+          updatedAt: new Date().getTime()
+        }
+      }, {
+        returnOriginal: false
+      })
+
       const user = await this.storage.db.collection('user').findOne({
         id: userId
       })
       newPost.user = user
-      newPost.memento = memento
+      newPost.memento = newMemento
 
       return newPost
     } catch (err) {

@@ -69,13 +69,47 @@ class Post {
   }
 
   async update(userId, payload) {
-    const newPostData = {
-      id: payload.postId,
-      contentList: payload.contentList,
-      mementoId: payload.mementoId
+    const memento = await this.storage.db.collection('memento').findOne({
+      id: payload.mementoId
+    })
+    const post = await this.storage.db.collection('post').findOne({
+      id: payload.postId
+    })
+
+    if (!memento) {
+      throw new Error('Memento not exist')
     }
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const updatedPostData = await loadedAccount.contract.updatePost(newPostData)
+    if (memento.isArchive) {
+      throw new Error('Cannot write to archived Memento')
+    }
+    if (!(memento.type == 'public' || memento.type == 'personal' && memento.owner == userId)) {
+      throw new Error('Sender does not have access to write to this memento')
+    }
+    if (!post) {
+      throw new Error('Post not exist')
+    }
+    if (post.owner !== userId) {
+      throw new Error('Post can only be updated by owner')
+    }
+    const newPostData = {
+      contentList: payload.contentList,
+      mementoId: payload.mementoId,
+      updatedAt: new Date().getTime(),
+    }
+    const { value: updatedPostData } = await this.storage.db.collection('post').findOneAndUpdate({
+      id: payload.postId
+    }, {
+      $set: newPostData
+    }, {
+      returnOriginal: false
+    })
+    
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
+    })
+    updatedPostData.user = user
+    updatedPostData.memento = memento
+
     return updatedPostData
   }
 

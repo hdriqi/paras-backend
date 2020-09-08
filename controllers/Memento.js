@@ -115,19 +115,67 @@ class Memento {
   }
 
   async archieve(userId, payload) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const memento = await loadedAccount.contract.archiveMemento({
+    const exist = await this.get({
       id: payload.mementoId
     })
-    return memento
+
+    if (exist.length === 0) {
+      throw new Error('Memento not exist')
+    }
+
+    if (exist[0].owner !== userId) {
+      throw new Error('Memento can only be updated by owner')
+    }
+
+    const { value: updatedMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
+      id: payload.mementoId,
+      owner: userId
+    }, {
+      $set: {
+        isArchive: true,
+        updatedAt: new Date().getTime()
+      }
+    }, {
+      returnOriginal: false
+    })
+
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
+    })
+    updatedMementoData.user = user
+    return updatedMementoData
   }
 
   async unarchieve(userId, payload) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const memento = await loadedAccount.contract.unarchiveMemento({
+    const exist = await this.get({
       id: payload.mementoId
     })
-    return memento
+
+    if (exist.length === 0) {
+      throw new Error('Memento not exist')
+    }
+
+    if (exist[0].owner !== userId) {
+      throw new Error('Memento can only be updated by owner')
+    }
+
+    const { value: updatedMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
+      id: payload.mementoId,
+      owner: userId
+    }, {
+      $set: {
+        isArchive: false,
+        updatedAt: new Date().getTime()
+      }
+    }, {
+      returnOriginal: false
+    })
+
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
+    })
+    updatedMementoData.user = user
+    return updatedMementoData
   }
 
 }

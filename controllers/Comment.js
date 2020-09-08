@@ -43,11 +43,24 @@ class Comment {
   }
 
   async delete(userId, commentId) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const deletedComment = await loadedAccount.contract.deleteComment({
+    const comment = await this.storage.db.collection('comment').findOne({
       id: commentId
     })
-    return deletedComment
+    if (!comment) {
+      throw new Error('Comment not exist')
+    }
+
+    const post = await this.storage.db.collection('post').findOne({
+      id: comment.postId
+    })
+    if ((comment.owner !== userId) || (post && post.owner !== userId)) {
+      throw new Error('Comment can only be deleted by comment owner or post owner')
+    }
+    await this.storage.db.collection('comment').deleteOne({
+      id: commentId
+    })
+
+    return comment
   }
 }
 

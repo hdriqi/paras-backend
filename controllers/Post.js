@@ -114,11 +114,21 @@ class Post {
   }
 
   async delete(userId, payload) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const deletedMemento = await loadedAccount.contract.deletePost({
+    const post = await this.storage.db.collection('post').findOne({
       id: payload.postId
     })
-    return deletedMemento
+
+    if (!post) {
+      throw new Error('Post not exist')
+    }
+    if (post.owner !== userId) {
+      throw new Error('Post can only be deleted by owner')
+    }
+    await this.storage.db.collection('post').deleteOne({
+      id: payload.postId
+    })
+
+    return post
   }
 
   async redact(userId, payload) {

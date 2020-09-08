@@ -46,6 +46,7 @@
     "node-gcm": "^1.0.3",
     "nodemailer": "^6.4.8",
     "query-params-mongo": "https://github.com/hdriqi/query-params-mongo",
+    "shortid": "^2.2.15",
     "sjcl": "^1.0.8",
     "tweetnacl": "^1.0.3",
     "underscore": "^1.10.2"

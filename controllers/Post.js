@@ -1,3 +1,5 @@
+const shortid = require('shortid')
+
 class Post {
   constructor(storage, near) {
     this.storage = storage
@@ -27,12 +29,38 @@ class Post {
 
   async create(userId, payload) {
     try {
+      const memento = await this.storage.db.collection('memento').findOne({
+        id: payload.mementoId
+      })
+
+      if (!memento) {
+        throw new Error('Memento not exist')
+      }
+      if (memento.isArchive) {
+        throw new Error('Cannot write to archived Memento')
+      }
+      if (!(memento.type == 'public' || memento.type == 'personal' && memento.owner == userId)) {
+        throw new Error('Sender does not have access to write to this memento')
+      }
+
+      const id = shortid.generate()
       const newPostData = {
+        id: id,
+        originalId: id,
         contentList: payload.contentList,
         mementoId: payload.mementoId,
+        owner: userId,
+        createdAt: new Date().getTime(),
       }
-      const loadedAccount = this.near.accountsMap.get(userId)
-      const newPost = await loadedAccount.contract.createPost(newPostData)
+      const newData = await this.storage.db.collection('post').insertOne(newPostData)
+      const newPost = newData.ops[0]
+      
+      const user = await this.storage.db.collection('user').findOne({
+        id: userId
+      })
+      newPost.user = user
+      newPost.memento = memento
+
       return newPost
     } catch (err) {
       console.log(err)

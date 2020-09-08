@@ -14,7 +14,7 @@ class Memento {
         targetCol: 'user',
         targetKey: 'id'
       }])
-      
+
       return mementoList
     } catch (err) {
       console.log(err)
@@ -24,17 +24,37 @@ class Memento {
 
   async create(userId, payload) {
     try {
+      if (!(payload.type === 'public' || payload.type === 'personal')) {
+        throw new Error('Memento type must be public or personal')
+      }
+      const tail = payload.type == 'personal' ? userId.split('.')[0] : payload.category
+      const mementoId = payload.name.concat('.').concat(tail)
+      const exist = await this.get({
+        id: mementoId
+      })
+
+      if (exist.length > 0) {
+        throw new Error('Memento id already taken')
+      }
       const mementoImg = DEFAULT_MEMENTO_IMG[0]
       const newMementoData = {
+        id: mementoId,
         name: payload.name,
         category: payload.category,
         img: mementoImg,
         desc: '',
-        type: payload.type
+        type: payload.type,
+        owner: userId,
+        isArchive: false,
+        createdAt: new Date().getTime(),
       }
-      const loadedAccount = this.near.accountsMap.get(userId)
-      const newMemento = await loadedAccount.contract.createMemento(newMementoData)
-      return newMemento
+      const user = await this.storage.db.collection('user').findOne({
+        id: userId
+      })
+      await this.storage.db.collection('memento').insertOne(newMementoData)
+      
+      newMementoData.user = user
+      return newMementoData
     } catch (err) {
       console.log(err)
       throw err

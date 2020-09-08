@@ -35,7 +35,6 @@ class Balance {
     const fromBalance = JSBI.BigInt(await this.get(userId))
     const toBalance = JSBI.BigInt(await this.get(receiverId))
     const tokens = JSBI.BigInt(value)
-    console.log(fromBalance.toString())
     if (!JSBI.greaterThanOrEqual(fromBalance, tokens)) {
       throw new Error('Not enough tokens on account')
     }
@@ -63,7 +62,8 @@ class Balance {
       from: userId,
       to: receiverId,
       value: value,
-      msg: msg
+      msg: msg,
+      createdAt: new Date().getTime()
     })
     const latestBalance = this.get(userId)
     return latestBalance

@@ -54,7 +54,7 @@ class Post {
       }
       const newData = await this.storage.db.collection('post').insertOne(newPostData)
       const newPost = newData.ops[0]
-      
+
       const user = await this.storage.db.collection('user').findOne({
         id: userId
       })
@@ -103,7 +103,7 @@ class Post {
     }, {
       returnOriginal: false
     })
-    
+
     const user = await this.storage.db.collection('user').findOne({
       id: userId
     })
@@ -132,11 +132,46 @@ class Post {
   }
 
   async redact(userId, payload) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const post = await loadedAccount.contract.redactPost({
+    const post = await this.storage.db.collection('post').findOne({
       id: payload.postId
     })
-    return post
+    if (!post) {
+      throw new Error('Post not exist')
+    }
+    if (post.owner !== userId) {
+      throw new Error('Post can only be updated by owner')
+    }
+
+    const memento = await this.storage.db.collection('memento').findOne({
+      id: post.mementoId
+    })
+
+    if (!memento) {
+      throw new Error('Memento not exist')
+    }
+    if (memento.isArchive) {
+      throw new Error('Cannot write to archived Memento')
+    }
+    if (memento.owner !== userId) {
+      throw new Error('Post can only be redacted by memento owner')
+    }
+    const { value: updatedPostData } = await this.storage.db.collection('post').findOneAndUpdate({
+      id: payload.postId
+    }, {
+      $set: {
+        mementoId: null
+      }
+    }, {
+      returnOriginal: false
+    })
+
+    const user = await this.storage.db.collection('user').findOne({
+      id: userId
+    })
+    updatedPostData.user = user
+    updatedPostData.memento = null
+
+    return updatedPostData
   }
 
   async transmit(userId, payload) {

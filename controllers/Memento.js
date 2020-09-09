@@ -70,6 +70,10 @@ class Memento {
       await this.storage.db.collection('memento').insertOne(newMementoData)
       await this.ctl().feed.follow(userId, mementoId, 'memento')
 
+      await this.ctl().activityPoint.add(userId, {
+        action: 'createMemento'
+      })
+
       newMementoData.user = user
       return newMementoData
     } catch (err) {

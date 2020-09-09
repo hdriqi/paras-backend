@@ -1,9 +1,10 @@
 const shortid = require('shortid')
 
 class Comment {
-  constructor(storage, near) {
+  constructor(storage, near, ctl) {
     this.storage = storage
     this.near = near
+    this.ctl = ctl
   }
 
   async get(query) {
@@ -34,6 +35,10 @@ class Comment {
     const newData = await this.storage.db.collection('comment').insertOne(newCommentData)
     const newComment = newData.ops[0]
 
+    await this.ctl().activityPoint.add(userId, {
+      action: 'createComment'
+    })
+
     const user = await this.storage.db.collection('user').findOne({
       id: userId
     })
@@ -58,6 +63,10 @@ class Comment {
     }
     await this.storage.db.collection('comment').deleteOne({
       id: commentId
+    })
+
+    await this.ctl().activityPoint.slash(userId, {
+      action: 'deleteComment'
     })
 
     return comment

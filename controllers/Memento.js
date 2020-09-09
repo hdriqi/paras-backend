@@ -9,6 +9,7 @@ class Memento {
   }
 
   async get(query) {
+    const self = this
     try {
       const mementoList = await this.storage.get('memento', query, [{
         col: 'user',
@@ -17,7 +18,31 @@ class Memento {
         targetKey: 'id'
       }])
 
-      return mementoList
+      const mementoWithStakeList = await Promise.all(mementoList.map(m => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            m.stakeList = await self.getStake({
+              mementoId: m.id
+            })
+            resolve(m)
+          } catch (err) {
+            reject(err)
+          }
+        })
+      }))
+
+      return mementoWithStakeList
+    } catch (err) {
+      console.log(err)
+      throw err
+    }
+  }
+
+  async getStake(query) {
+    try {
+      const stakeList = await this.storage.get('stake', query)
+
+      return stakeList
     } catch (err) {
       console.log(err)
       throw err

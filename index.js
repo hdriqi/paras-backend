@@ -26,6 +26,7 @@ const Metascraper = require('./controllers/Metascraper')
 const Memento = require('./controllers/Memento')
 const Post = require('./controllers/Post')
 const Notification = require('./controllers/Notification')
+const ActivityPoint = require('./controllers/ActivityPoint')
 
 const PORT = 9090
 const server = express()
@@ -61,9 +62,10 @@ const main = async () => {
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)
   const wallet = new Wallet(storage, near, ctl)
-  const comment = new Comment(storage, near)
+  const comment = new Comment(storage, near, ctl)
+  const activityPoint = new ActivityPoint(storage, near)
   const memento = new Memento(storage, near, ctl)
-  const post = new Post(storage, near)
+  const post = new Post(storage, near, ctl)
   const metascraper = new Metascraper(storage)
   const notification = new Notification(storage)
   const auth = new Auth(state, storage, mail, near, ctl)
@@ -75,6 +77,7 @@ const main = async () => {
     explore: explore,
     wallet: wallet,
     comment: comment,
+    activityPoint: activityPoint,
     memento: memento,
     post: post,
     metascraper: metascraper,

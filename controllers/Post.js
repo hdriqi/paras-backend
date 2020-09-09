@@ -1,9 +1,10 @@
 const shortid = require('shortid')
 
 class Post {
-  constructor(storage, near) {
+  constructor(storage, near, ctl) {
     this.storage = storage
     this.near = near
+    this.ctl = ctl
   }
 
   async get(query) {
@@ -64,6 +65,14 @@ class Post {
       }, {
         returnOriginal: false
       })
+
+      await this.ctl().activityPoint.add(userId, {
+        action: 'createPost'
+      })
+
+      await this.ctl().activityPoint.add(newMemento.owner, {
+        action: 'createPostMementoOwner'
+      })  
 
       const user = await this.storage.db.collection('user').findOne({
         id: userId
@@ -138,6 +147,10 @@ class Post {
       id: payload.postId
     })
 
+    await this.ctl().activityPoint.slash(userId, {
+      action: 'deletePost'
+    })
+
     return post
   }
 
@@ -147,9 +160,6 @@ class Post {
     })
     if (!post) {
       throw new Error('Post not exist')
-    }
-    if (post.owner !== userId) {
-      throw new Error('Post can only be updated by owner')
     }
 
     const memento = await this.storage.db.collection('memento').findOne({
@@ -173,6 +183,10 @@ class Post {
       }
     }, {
       returnOriginal: false
+    })
+
+    await this.ctl().activityPoint.slash(post.owner, {
+      action: 'redactPost'
     })
 
     const user = await this.storage.db.collection('user').findOne({

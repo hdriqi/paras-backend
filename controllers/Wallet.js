@@ -46,11 +46,11 @@ class Wallet {
     })
     const post = postList[0]
     if (post) {
-      const tokensForPostOwner = this._percent(value, '70', '100')
+      const tokensForPostOwner = this._percent(value, '80', '100')
       await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
     }
     if (post && post.mementoId) {
-      const tokensForMemento = this._percent(value, '30', '100')
+      const tokensForMemento = this._percent(value, '20', '100')
       const stakeList = await this.getStake({
         mementoId: post.mementoId
       })

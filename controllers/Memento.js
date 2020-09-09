@@ -202,8 +202,22 @@ class Memento {
   }
 
   async deposit(userId, payload) {
+    const userBalance = await this.ctl().wallet.get(userId)
+    const fromBalance = JSBI.BigInt(userBalance)
+    const tokens = JSBI.BigInt(payload.value)
+    const fee = JSBI.divide(JSBI.multiply(JSBI.BigInt('10'), JSBI.BigInt(payload.value)), JSBI.BigInt('100'))
+
+    if (!JSBI.greaterThanOrEqual(fromBalance, JSBI.add(tokens, fee))) {
+      throw new Error('Not enough tokens on account')
+    }
+
+    const memento = await this.get({
+      id: payload.mementoId
+    })
+
     const lockedMementoId = `paras::locked::${payload.mementoId}`
-    await this.ctl().wallet.transfer(userId, lockedMementoId, payload.value, `DepositMemento::${payload.value}`)
+    await this.ctl().wallet.internalTransfer(userId, lockedMementoId, payload.value, `DepositMemento::${payload.value}`)
+    await this.ctl().wallet.distributeIncome(userId, memento[0], fee.toString(), `DepositMemento::DividendMemento::${payload.mementoId}`)
 
     const userStakeExist = await this.storage.db.collection('stake').findOne({
       mementoId: payload.mementoId,
@@ -240,7 +254,7 @@ class Memento {
     if (JSBI.lessThan(JSBI.BigInt(userStakeExist.value), JSBI.BigInt(payload.value))) {
       throw new Error('Not enough tokens on stake')
     }
-    await this.ctl().wallet.transfer(lockedMementoId, userId, payload.value, `WithdrawMemento::${payload.value}`)
+    await this.ctl().wallet.internalTransfer(lockedMementoId, userId, payload.value, `WithdrawMemento::${payload.value}`)
     
     const newTotalStake = userStakeExist ? JSBI.subtract(JSBI.BigInt(userStakeExist.value), JSBI.BigInt(payload.value)).toString() : '0'
     

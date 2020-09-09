@@ -38,6 +38,32 @@ class Wallet {
     return JSBI.divide(JSBI.multiply(JSBI.BigInt(a.toString()), JSBI.BigInt(value.toString())), JSBI.BigInt(b.toString()))
   }
 
+  async distributeIncome(userId, memento, value, msg) {
+    const self = this
+    const stakeList = await this.getStake({
+      mementoId: memento.id
+    })
+    const tokensForMemento = JSBI.BigInt(value)
+    if (stakeList.length > 0) {
+      const tokensForMementoOwner = this._percent(tokensForMemento, '60', '100')
+      await this.internalTransfer(userId, memento.owner, tokensForMementoOwner.toString(), msg)
+      const tokensForMementoStake = JSBI.subtract(tokensForMemento, tokensForMementoOwner)
+      const totalStake = await this.get(`paras::locked::${memento.id}`)
+      await Promise.all(stakeList.map(stake => {
+        return new Promise(async (resolve, reject) => {
+          const stakePercentage = JSBI.divide(JSBI.multiply(JSBI.BigInt(stake.value), JSBI.BigInt('100')), JSBI.BigInt(totalStake))
+          const tokensReceive = self._percent(tokensForMementoStake, stakePercentage, '100')
+          await self.internalTransfer(userId, stake.userId, tokensReceive.toString(), msg)
+          resolve()
+        })
+      }))
+    }
+    else {
+      await this.internalTransfer(userId, memento.owner, tokensForMemento.toString(), msg)
+    }
+    return true
+  }
+
   async piece(userId, postId, value) {
     const self = this
     const postCtl = this.ctl().post
@@ -45,40 +71,26 @@ class Wallet {
       id: postId
     })
     const post = postList[0]
-    if (post) {
-      const tokensForPostOwner = this._percent(value, '80', '100')
+    console.log(post)
+
+    if (post && !post.mementoId) {
+      const tokensForPostOwner = this._percent(value, '100', '100')
       await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
     }
     if (post && post.mementoId) {
+      const tokensForPostOwner = this._percent(value, '80', '100')
+      await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
       const tokensForMemento = this._percent(value, '20', '100')
-      const stakeList = await this.getStake({
-        mementoId: post.mementoId
-      })
-      if (stakeList.length > 0) {
-        const tokensForMementoOwner = this._percent(tokensForMemento, '60', '100')
-        await self.transfer(userId, post.memento.owner, tokensForMementoOwner.toString(), `Piece::DividendMemento::${post.mementoId}`)
-        const tokensForMementoStake = JSBI.subtract(tokensForMemento, tokensForMementoOwner)
-        const totalStake = await this.get(`paras::locked::${post.mementoId}`)
-        await Promise.all(stakeList.map(stake => {
-          return new Promise(async (resolve, reject) => {
-            const stakePercentage = JSBI.divide(JSBI.multiply(JSBI.BigInt(stake.value), JSBI.BigInt('100')), JSBI.BigInt(totalStake))
-            const tokensReceive = self._percent(tokensForMementoStake, stakePercentage, '100')
-            await self.transfer(userId, stake.userId, tokensReceive.toString(), `Piece::DividendMemento::${post.mementoId}`)
-            resolve()
-          })
-        }))
-      }
-      else {
-        await self.transfer(userId, post.memento.owner, tokensForMemento.toString(), `Piece::DividendMemento::${post.mementoId}`)
-      }
+      await this.distributeIncome(userId, post.memento, tokensForMemento, `Piece::DividendMemento::${post.mementoId}`)
     }
     return 0
   }
 
-  async transfer(userId, receiverId, value, msg = '') {
+  async internalTransfer(userId, receiverId, value, msg = '') {
     const fromBalance = JSBI.BigInt(await this.get(userId))
     const toBalance = JSBI.BigInt(await this.get(receiverId))
     const tokens = JSBI.BigInt(value)
+
     if (!JSBI.greaterThanOrEqual(fromBalance, tokens)) {
       throw new Error('Not enough tokens on account')
     }
@@ -106,7 +118,7 @@ class Wallet {
       from: userId,
       to: receiverId,
       value: value,
-      msg: msg.replace(/::/g, ''),
+      msg: msg,
       createdAt: new Date().getTime()
     })
 
@@ -117,6 +129,12 @@ class Wallet {
     }
 
     const latestBalance = this.get(userId)
+    return latestBalance
+  }
+
+  async transfer(userId, receiverId, value, msg = '') {
+    const cleanMsg = msg.replace(/::/g, '')
+    const latestBalance = await this.internalTransfer(userId, receiverId, value, cleanMsg)
     return latestBalance
   }
 

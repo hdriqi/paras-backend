@@ -1,4 +1,5 @@
 const { DEFAULT_MEMENTO_IMG } = require('../utils/constants')
+const JSBI = require('jsbi')
 
 class Memento {
   constructor(storage, near, ctl) {
@@ -126,7 +127,7 @@ class Memento {
     }
 
     if (exist[0].owner !== userId) {
-      throw new Error('Memento can only be updated by owner')
+      throw new Error('Memento can only be archived by owner')
     }
 
     const { value: updatedMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
@@ -158,7 +159,7 @@ class Memento {
     }
 
     if (exist[0].owner !== userId) {
-      throw new Error('Memento can only be updated by owner')
+      throw new Error('Memento can only be unarchived by owner')
     }
 
     const { value: updatedMementoData } = await this.storage.db.collection('memento').findOneAndUpdate({
@@ -180,6 +181,59 @@ class Memento {
     return updatedMementoData
   }
 
+  async deposit(userId, payload) {
+    const lockedMementoId = `paras::locked::${payload.mementoId}`
+    await this.ctl().wallet.transfer(userId, lockedMementoId, payload.value, `DepositMemento::${payload.value}`)
+
+    const userStakeExist = await this.storage.db.collection('stake').findOne({
+      mementoId: payload.mementoId,
+      userId: userId
+    })
+    const newTotalStake = userStakeExist ? JSBI.add(JSBI.BigInt(userStakeExist.value), JSBI.BigInt(payload.value)).toString() : payload.value
+
+    const { value: updatedUserStake } = await this.storage.db.collection('stake').findOneAndUpdate({
+      mementoId: payload.mementoId,
+      userId: userId
+    }, {
+      $set: {
+        value: newTotalStake
+      }
+    }, {
+      returnOriginal: false,
+      upsert: true
+    })
+
+    return updatedUserStake
+  }
+
+  async withdraw(userId, payload) {
+    const lockedMementoId = `paras::locked::${payload.mementoId}`
+    
+    const userStakeExist = await this.storage.db.collection('stake').findOne({
+      mementoId: payload.mementoId,
+      userId: userId
+    })
+    if (JSBI.lessThan(JSBI.BigInt(userStakeExist.value), JSBI.BigInt(payload.value))) {
+      throw new Error('Not enough tokens on stake')
+    }
+    await this.ctl().wallet.transfer(lockedMementoId, userId, payload.value, `WithdrawMemento::${payload.value}`)
+    
+    const newTotalStake = userStakeExist ? JSBI.subtract(JSBI.BigInt(userStakeExist.value), JSBI.BigInt(payload.value)).toString() : '0'
+    
+    const { value: updatedUserStake } = await this.storage.db.collection('stake').findOneAndUpdate({
+      mementoId: payload.mementoId,
+      userId: userId
+    }, {
+      $set: {
+        value: newTotalStake
+      }
+    }, {
+      returnOriginal: false,
+      upsert: true
+    })
+
+    return updatedUserStake
+  }
 }
 
 module.exports = Memento

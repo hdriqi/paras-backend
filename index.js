@@ -322,6 +322,68 @@ const main = async () => {
     }
   })
 
+  server.put('/mementos/:mementoId/deposit', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId && req.body.value)) {
+        throw new Error('Required [params:mementoId, body:value]')
+      }
+      const updatedMemento = await memento.deposit(userId, {
+        mementoId: mementoId,
+        value: req.body.value
+      })
+      return res.json({
+        success: 1,
+        data: updatedMemento
+      })
+    } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be unarchieved by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be unarchieved by owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.put('/mementos/:mementoId/withdraw', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      const mementoId = req.params.mementoId
+      if (!(userId && mementoId && req.body.value)) {
+        throw new Error('Required [params:mementoId, body:value]')
+      }
+      const updatedMemento = await memento.withdraw(userId, {
+        mementoId: mementoId,
+        value: req.body.value
+      })
+      return res.json({
+        success: 1,
+        data: updatedMemento
+      })
+    } catch (err) {
+      if (err.panic_msg) {
+        if (err.panic_msg.includes('Memento can only be unarchieved by owner')) {
+          return res.status(400).json({
+            success: 0,
+            message: 'Memento can only be unarchieved by owner'
+          })
+        }
+      }
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.delete('/mementos/:mementoId', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId

@@ -1,9 +1,10 @@
 const { DEFAULT_MEMENTO_IMG } = require('../utils/constants')
 
 class Memento {
-  constructor(storage, near) {
+  constructor(storage, near, ctl) {
     this.storage = storage
     this.near = near
+    this.ctl = ctl
   }
 
   async get(query) {
@@ -52,6 +53,7 @@ class Memento {
         id: userId
       })
       await this.storage.db.collection('memento').insertOne(newMementoData)
+      await this.ctl().feed.follow(userId, mementoId, 'memento')
 
       newMementoData.user = user
       return newMementoData

@@ -52,17 +52,35 @@ const main = async () => {
     max: 100
   })
 
+  const ctl = () => {
+    return svc
+  }
+
   const feed = new Feed(state, storage)
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)
   const wallet = new Wallet(storage, near)
-  const auth = new Auth(state, storage, mail, near)
   const comment = new Comment(storage, near)
-  const memento = new Memento(storage, near)
+  const memento = new Memento(storage, near, ctl)
   const post = new Post(storage, near)
   const metascraper = new Metascraper(storage)
   const notification = new Notification(storage)
+  const auth = new Auth(state, storage, mail, near, ctl)
+
+  const svc = {
+    feed: feed,
+    transaction: transaction,
+    verification: verification,
+    explore: explore,
+    wallet: wallet,
+    comment: comment,
+    memento: memento,
+    post: post,
+    metascraper: metascraper,
+    notification: notification,
+    auth: auth
+  }
 
   if (process.env.NODE_ENV === 'production') {
     server.set('trust proxy', 1)

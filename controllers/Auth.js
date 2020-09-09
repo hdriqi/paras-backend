@@ -1,16 +1,17 @@
 const nearSeedPhrase = require('near-seed-phrase')
 const Cryptr = require('cryptr')
-const { DEFAULT_AVATAR, DEFAULT_MEMENTO_IMG } = require('../utils/constants')
+const { DEFAULT_AVATAR } = require('../utils/constants')
 const axios = require('axios')
 
 class Auth {
-  constructor(state, storage, mail, near) {
+  constructor(state, storage, mail, near, ctl) {
     this.state = state
     this.storage = storage
     this.mail = mail
     this.near = near
     this.cryptr = new Cryptr(process.env.TOKEN_SECRET)
     this.usersMap = new Map()
+    this.ctl = ctl
   }
 
   async register({ email, username }) {
@@ -146,15 +147,12 @@ class Auth {
         })
 
         // create personal memento for account
-        const mementoImg = DEFAULT_MEMENTO_IMG[0]
-        const newMementoData = {
+        const newMementoPayload = {
           name: 'timeline',
           category: 'info',
-          img: mementoImg,
-          desc: 'My Timeline',
           type: 'personal'
         }
-        await loadedAccount.contract.createMemento(newMementoData)
+        await this.ctl().memento.create(userId, newMementoPayload)
       }
 
       const token = this.cryptr.encrypt(JSON.stringify({

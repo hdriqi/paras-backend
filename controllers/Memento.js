@@ -132,6 +132,8 @@ class Memento {
       id: payload.mementoId
     })
 
+    // to do return stake
+
     return exist[0]
   }
 
@@ -219,6 +221,10 @@ class Memento {
     }, {
       returnOriginal: false,
       upsert: true
+    })
+
+    await this.ctl().activityPoint.add(userId, {
+      action: 'depositMemento'
     })
 
     return updatedUserStake

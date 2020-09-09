@@ -109,6 +109,13 @@ class Wallet {
       msg: msg.replace(/::/g, ''),
       createdAt: new Date().getTime()
     })
+
+    if (userId !== receiverId) {
+      await this.ctl().activityPoint.add(userId, {
+        action: 'transfer'
+      })
+    }
+
     const latestBalance = this.get(userId)
     return latestBalance
   }

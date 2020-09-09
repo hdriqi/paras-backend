@@ -189,6 +189,10 @@ class Post {
       action: 'redactPost'
     })
 
+    await this.ctl().activityPoint.add(userId, {
+      action: 'redactPost'
+    })
+
     const user = await this.storage.db.collection('user').findOne({
       id: userId
     })

@@ -1,10 +1,11 @@
 const JSBI = require('jsbi')
 const shortid = require('shortid')
 
-class Balance {
-  constructor(storage, near) {
+class Wallet {
+  constructor(storage, near, ctl) {
     this.storage = storage
     this.near = near
+    this.ctl = ctl
   }
 
   async get(userId) {
@@ -22,13 +23,56 @@ class Balance {
     }
   }
 
+  async getStake(query) {
+    try {
+      const stakeList = await this.storage.get('stake', query)
+
+      return stakeList
+    } catch (err) {
+      console.log(err)
+      throw err
+    }
+  }
+
+  _percent(value, a, b) {
+    return JSBI.divide(JSBI.multiply(JSBI.BigInt(a.toString()), JSBI.BigInt(value.toString())), JSBI.BigInt(b.toString()))
+  }
+
   async piece(userId, postId, value) {
-    const loadedAccount = this.near.accountsMap.get(userId)
-    const latestBalance = await loadedAccount.contract.piecePost({
-      postId: postId,
-      value: value
+    const self = this
+    const postCtl = this.ctl().post
+    const postList = await postCtl.get({
+      id: postId
     })
-    return latestBalance
+    const post = postList[0]
+    if (post) {
+      const tokensForPostOwner = this._percent(value, '70', '100')
+      await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
+    }
+    if (post && post.mementoId) {
+      const tokensForMemento = this._percent(value, '30', '100')
+      const stakeList = await this.getStake({
+        mementoId: post.mementoId
+      })
+      if (stakeList.length > 0) {
+        const tokensForMementoOwner = this._percent(tokensForMemento, '60', '100')
+        await self.transfer(userId, post.memento.owner, tokensForMementoOwner.toString(), `Piece::DividendMemento::${post.mementoId}`)
+        const tokensForMementoStake = JSBI.subtract(tokensForMemento, tokensForMementoOwner)
+        const totalStake = await this.get(`paras::locked::${post.mementoId}`)
+        await Promise.all(stakeList.map(stake => {
+          return new Promise(async (resolve, reject) => {
+            const stakePercentage = JSBI.divide(JSBI.multiply(JSBI.BigInt(stake.value), JSBI.BigInt('100')), JSBI.BigInt(totalStake))
+            const tokensReceive = self._percent(tokensForMementoStake, stakePercentage, '100')
+            await self.transfer(userId, stake.userId, tokensReceive.toString(), `Piece::DividendMemento::${post.mementoId}`)
+            resolve()
+          })
+        }))
+      }
+      else {
+        await self.transfer(userId, post.memento.owner, tokensForMemento.toString(), `Piece::DividendMemento::${post.mementoId}`)
+      }
+    }
+    return 0
   }
 
   async transfer(userId, receiverId, value, msg = '') {
@@ -62,7 +106,7 @@ class Balance {
       from: userId,
       to: receiverId,
       value: value,
-      msg: msg,
+      msg: msg.replace(/::/g, ''),
       createdAt: new Date().getTime()
     })
     const latestBalance = this.get(userId)
@@ -76,4 +120,4 @@ class Balance {
   }
 }
 
-module.exports = Balance
+module.exports = Wallet

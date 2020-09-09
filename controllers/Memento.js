@@ -9,7 +9,7 @@ class Memento {
   }
 
   async get(query) {
-    const self = this
+    const walletCtl = this.ctl().wallet
     try {
       const mementoList = await this.storage.get('memento', query, [{
         col: 'user',
@@ -21,7 +21,7 @@ class Memento {
       const mementoWithStakeList = await Promise.all(mementoList.map(m => {
         return new Promise(async (resolve, reject) => {
           try {
-            m.stakeList = await self.getStake({
+            m.stakeList = await walletCtl.getStake({
               mementoId: m.id
             })
             resolve(m)
@@ -32,17 +32,6 @@ class Memento {
       }))
 
       return mementoWithStakeList
-    } catch (err) {
-      console.log(err)
-      throw err
-    }
-  }
-
-  async getStake(query) {
-    try {
-      const stakeList = await this.storage.get('stake', query)
-
-      return stakeList
     } catch (err) {
       console.log(err)
       throw err

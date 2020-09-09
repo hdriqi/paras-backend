@@ -60,7 +60,7 @@ const main = async () => {
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)
-  const wallet = new Wallet(storage, near)
+  const wallet = new Wallet(storage, near, ctl)
   const comment = new Comment(storage, near)
   const memento = new Memento(storage, near, ctl)
   const post = new Post(storage, near)

@@ -146,6 +146,8 @@ class Auth {
           bio: ''
         })
 
+        await this.storage.db.collection('user').insertOne(profile)
+
         // create personal memento for account
         const newMementoPayload = {
           name: 'timeline',

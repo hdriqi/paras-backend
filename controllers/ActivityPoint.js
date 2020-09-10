@@ -26,7 +26,7 @@ class ActivityPoint {
   }
 
   async getByUserId(userId) {
-    const user = await this.get({
+    const activityList = await this.get({
       userId: userId
     })
     if (activityList.length === 0) {

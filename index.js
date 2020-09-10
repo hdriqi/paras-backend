@@ -735,6 +735,21 @@ const main = async () => {
     }
   })
 
+  server.get('/activityPoint/:id', async (req, res) => {
+    try {
+      const accountPoint = await activityPoint.get(req.params.id)
+      return res.json({
+        success: 1,
+        data: accountPoint
+      })
+    } catch (err) {
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.get('/balances/:id', async (req, res) => {
     try {
       const accountBalance = await wallet.get(req.params.id)

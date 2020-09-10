@@ -32,7 +32,7 @@ class ActivityPoint {
     if (activityList.length === 0) {
       return 0
     }
-    return user[0].point
+    return activityList[0].point
   }
 
   async get(query) {

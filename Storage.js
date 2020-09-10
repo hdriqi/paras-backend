@@ -27,14 +27,26 @@ class Storage {
 
   async get(collection, q, embed) {
     var query = processQuery(q)
-    const data = await this.db.collection(collection).find(query.filter, {
-      projection: {
-        _id: 0
-      }
-    })
-      .sort(query.sort)
-      .skip(query.skip || 0)
-      .limit(query.limit || 10)
+    let data = []
+    if (query.limit) {
+      data = await this.db.collection(collection).find(query.filter, {
+        projection: {
+          _id: 0
+        }
+      })
+        .sort(query.sort)
+        .skip(query.skip || 0)
+        .limit(query.limit || 10)
+    }
+    else {
+      data = await this.db.collection(collection).find(query.filter, {
+        projection: {
+          _id: 0
+        }
+      })
+        .sort(query.sort)
+        .skip(query.skip || 0)
+    }
 
     const arr = data.toArray()
     const iter = (await arr).map(x => x)

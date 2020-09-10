@@ -4,6 +4,21 @@ class Transaction {
     this.storage = storage
   }
 
+  async get(query) {
+    const txList = await this.storage.get('transaction', query, [{
+      col: 'fromUser',
+      key: 'from',
+      targetCol: 'user',
+      targetKey: 'id'
+    }, {
+      col: 'toUser',
+      key: 'to',
+      targetCol: 'user',
+      targetKey: 'id'
+    }])
+    return txList
+  }
+
   async getById(id, skip = 0, limit = 5) {
     const embed = [{
       col: 'fromUser',

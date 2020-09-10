@@ -1,5 +1,6 @@
 const JSBI = require('jsbi')
 const shortid = require('shortid')
+const { groupBy } = require('../utils/common')
 
 class Wallet {
   constructor(storage, near, ctl) {
@@ -105,25 +106,51 @@ class Wallet {
   }
 
   async piece(userId, postId, value) {
+    // check token own
     const self = this
     const postCtl = this.ctl().post
     const postList = await postCtl.get({
       id: postId
     })
     const post = postList[0]
-    console.log(post)
-
-    if (post && !post.mementoId) {
-      const tokensForPostOwner = this._percent(value, '100', '100')
-      await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
+    // get transfer with certain message
+    const supporterList = await this.ctl().transaction.get({
+      msg: `Piece::${postId}`
+    })
+    const tokens = JSBI.BigInt(value)
+    let tokensForPostOwner = supporterList.length > 0 ? this._percent(value, '80', '100') : tokens
+    const tokensForSupporter = JSBI.subtract(tokens, tokensForPostOwner)
+    if (JSBI.greaterThan(tokensForSupporter, JSBI.BigInt('0'))) {
+      const distributeTokens = tokensForSupporter
+      const groupBySupporterId = groupBy(supporterList, 'from')
+      let totalPiece = JSBI.BigInt('0')
+      const supporterIds = Object.keys(groupBySupporterId).map(userId => {
+        const totalUserPiece = groupBySupporterId[userId].reduce((a, b) => {
+          return JSBI.add(JSBI.BigInt(a), JSBI.BigInt(b.value))
+        }, 0)
+        totalPiece = JSBI.add(totalPiece, totalUserPiece)
+        return {
+          userId: userId,
+          totalPiece: totalUserPiece
+        }
+      })
+      let remainder = distributeTokens
+      await Promise.all(supporterIds.map((sup) => {
+        return new Promise(async (resolve, reject) => {
+          const tokens = JSBI.divide(JSBI.multiply(sup.totalPiece, distributeTokens), totalPiece)
+          console.log(`${sup.userId} ${sup.totalPiece.toString()} -> ${tokens.toString()}`)
+          remainder = JSBI.subtract(remainder, tokens)
+          await self.internalTransfer(userId, sup.userId, tokens.toString(), `Piece::${postId}`)
+          resolve()
+        })
+      }))
+      if (JSBI.greaterThan(remainder, JSBI.BigInt('0'))) {
+        tokensForPostOwner = JSBI.add(tokensForPostOwner, remainder)
+      }
     }
-    if (post && post.mementoId) {
-      const tokensForPostOwner = this._percent(value, '80', '100')
-      await self.transfer(userId, post.owner, tokensForPostOwner.toString(), `Piece`)
-      const tokensForMemento = this._percent(value, '20', '100')
-      await this.distributeIncome(userId, post.memento, tokensForMemento, `Piece::DividendMemento::${post.mementoId}`)
-    }
-    return 0
+    await self.internalTransfer(userId, post.owner, tokensForPostOwner.toString(), `Piece::${postId}`)
+    console.log(`${post.owner} -> ${tokensForPostOwner.toString()}`)
+    return true
   }
 
   async internalTransfer(userId, receiverId, value, msg = '') {

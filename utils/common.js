@@ -7,6 +7,14 @@ const prettyBalance = (balance, decimals = 18, len = 8) => {
   return `${formattedHead}.${tail}`
 }
 
+const groupBy = function (xs, key) {
+  return xs.reduce(function (rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x)
+    return rv
+  }, {})
+}
+
 module.exports = {
-  prettyBalance
+  prettyBalance,
+  groupBy
 } 

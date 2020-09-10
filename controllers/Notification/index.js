@@ -1,6 +1,7 @@
 const gcm = require('node-gcm')
 const NotificationComment = require('./NotificationComment')
 const NotificationPost = require('./NotificationPost')
+const NotificationWallet = require('./NotificationWallet')
 
 class Notification {
   constructor(storage) {
@@ -8,6 +9,7 @@ class Notification {
     this.sender = new gcm.Sender(process.env.GCM_SENDER_KEY)
     this.notifyComment = new NotificationComment(storage)
     this.notifyPost = new NotificationPost(storage)
+    this.notifyWallet = new NotificationWallet(storage)
 
     this.send = this.send.bind(this)
   }
@@ -75,6 +77,9 @@ class Notification {
     }
     if (action === 'redactPost') {
       this.notifyPost.redact(data, this.send)
+    }
+    if (action === 'transferWallet') {
+      this.notifyWallet.transfer(data, this.send)
     }
     // if (type === 'create') {
     //   if (collection === 'comment') {

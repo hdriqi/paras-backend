@@ -115,7 +115,7 @@ class Wallet {
     const post = postList[0]
     // get transfer with certain message
     const supporterList = await this.ctl().transaction.get({
-      msg: `Piece::${postId}`
+      msg: `System::Piece::${postId}`
     })
     const tokens = JSBI.BigInt(value)
     let tokensForPostOwner = supporterList.length > 0 ? this._percent(value, '80', '100') : tokens
@@ -140,7 +140,7 @@ class Wallet {
           const tokens = JSBI.divide(JSBI.multiply(sup.totalPiece, distributeTokens), totalPiece)
           console.log(`${sup.userId} ${sup.totalPiece.toString()} -> ${tokens.toString()}`)
           remainder = JSBI.subtract(remainder, tokens)
-          await self.internalTransfer(userId, sup.userId, tokens.toString(), `Piece::${postId}`)
+          await self.internalTransfer(userId, sup.userId, tokens.toString(), `System::PieceSupporter::${postId}`)
           resolve()
         })
       }))
@@ -148,7 +148,7 @@ class Wallet {
         tokensForPostOwner = JSBI.add(tokensForPostOwner, remainder)
       }
     }
-    await self.internalTransfer(userId, post.owner, tokensForPostOwner.toString(), `Piece::${postId}`)
+    await self.internalTransfer(userId, post.owner, tokensForPostOwner.toString(), `System::Piece::${postId}`)
     console.log(`${post.owner} -> ${tokensForPostOwner.toString()}`)
     return true
   }
@@ -180,7 +180,7 @@ class Wallet {
     }, {
       upsert: true
     })
-    await this.storage.db.collection('transaction').insertOne({
+    const newData = await this.storage.db.collection('transaction').insertOne({
       id: shortid.generate(),
       from: userId,
       to: receiverId,
@@ -194,8 +194,11 @@ class Wallet {
         action: 'transfer'
       })
     }
+    const newTx = newData.ops[0]
 
     const latestBalance = this.get(userId)
+    // notify users
+    this.ctl().notification.processEvent('transferWallet', newTx)
     return latestBalance
   }
 

@@ -30,7 +30,7 @@ class Notification {
       userId: userId
     })
     const devices = await devicesPtr.toArray()
-    const deviceIds = devices.filter(dev => dev.type === 'android').map(dev => dev.id)
+    const deviceIds = devices.map(dev => dev.id)
     this.sendPushNotification(deviceIds, data, notification)
   }
 

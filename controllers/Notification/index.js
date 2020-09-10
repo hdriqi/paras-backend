@@ -17,8 +17,8 @@ class Notification {
       userId: userId,
       id: payload.deviceId,
       type: payload.type,
-      createdAt: new Date().getTime().toString(),
-      updatedAt: new Date().getTime().toString()
+      createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime()
     })
 
     return newDevice
@@ -66,20 +66,26 @@ class Notification {
     })
   }
 
-  async processEvent(type, collection, action, params, data) {
-    if (type === 'create') {
-      if (collection === 'comment') {
-        this.notifyComment.create(data, this.send)
-      }
-      if (collection === 'post') {
-        this.notifyPost.create(data, this.send)
-      }
+  async processEvent(action, data) {
+    if (action === 'createComment') {
+      this.notifyComment.create(data, this.send)
     }
-    if (type === 'update') {
-      if (collection === 'post') {
-        this.notifyPost.update(data, this.send, params)
-      }
+    if (action === 'createPost') {
+      this.notifyPost.create(data, this.send)
     }
+    // if (type === 'create') {
+    //   if (collection === 'comment') {
+    //     this.notifyComment.create(data, this.send)
+    //   }
+    //   if (collection === 'post') {
+    //     this.notifyPost.create(data, this.send)
+    //   }
+    // }
+    // if (type === 'update') {
+    //   if (collection === 'post') {
+    //     this.notifyPost.update(data, this.send, params)
+    //   }
+    // }
   }
 }
 

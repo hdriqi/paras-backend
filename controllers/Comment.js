@@ -39,10 +39,12 @@ class Comment {
       action: 'createComment'
     })
 
+    
     const user = await this.storage.db.collection('user').findOne({
       id: userId
     })
     newComment.user = user
+    await this.ctl().notification.processEvent('createComment', newComment)
 
     return newComment
   }

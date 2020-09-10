@@ -15,7 +15,8 @@ class NotificationPost {
   async create(data, send) {
     // if post.memento.owner && post.owner !== post.memento.owner
     if (data.mementoId) {
-      const memento = await this.storage.db.collection('memento').findOne({
+      
+      const memento = data.memento || await this.storage.db.collection('memento').findOne({
         id: data.mementoId
       })
       if (memento && memento.owner !== data.owner) {
@@ -27,7 +28,7 @@ class NotificationPost {
           payload: payload,
           message: `${data.owner} create new post in ${memento.id}`,
           userId: memento.owner,
-          createdAt: new Date().getTime().toString()
+          createdAt: new Date().getTime()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
         console.log(`send notification to ${memento.owner} with message ${newNotification.message}`)
@@ -58,7 +59,7 @@ class NotificationPost {
           payload: payload,
           message: `${data.owner} transmitted your post`,
           userId: originalPost.owner,
-          createdAt: new Date().getTime().toString()
+          createdAt: new Date().getTime()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
         console.log(`send notification to ${originalPost.owner} with message ${newNotification.message}`)
@@ -107,7 +108,7 @@ class NotificationPost {
         payload: payload,
         message: `${data.owner} mentioned you in a post`,
         userId: user,
-        createdAt: new Date().getTime().toString()
+        createdAt: new Date().getTime()
       }
       await this.storage.db.collection('notification').insertOne(newNotification)
       send(user, payload, {
@@ -135,7 +136,7 @@ class NotificationPost {
           payload: payload,
           message: `Your post has been redacted from ${mementoId}`,
           userId: data.owner,
-          createdAt: new Date().getTime().toString()
+          createdAt: new Date().getTime()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
         console.log(`send notification to ${data.owner} with message ${newNotification.message}`)

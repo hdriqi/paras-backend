@@ -5,7 +5,7 @@ class NotificationComment {
 
   async create(data, send) {
     if (data.postId) {
-      // console.log('add notification')
+      console.log('add comment notification')
       const post = await this.storage.db.collection('post').findOne({
         id: data.postId
       })
@@ -17,7 +17,7 @@ class NotificationComment {
         payload: payload,
         message: `${data.owner} commented on your post`,
         userId: post.owner,
-        createdAt: new Date().getTime().toString()
+        createdAt: new Date().getTime()
       }
       await this.storage.db.collection('notification').insertOne(newNotification)
       send(post.owner, payload, {
@@ -56,7 +56,7 @@ class NotificationComment {
           payload: payload,
           message: `${data.owner} mentioned you in a comment`,
           userId: user,
-          createdAt: new Date().getTime().toString()
+          createdAt: new Date().getTime()
         }
         await this.storage.db.collection('notification').insertOne(newNotification)
         send(user, payload, {

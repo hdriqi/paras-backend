@@ -72,14 +72,17 @@ class Post {
 
       await this.ctl().activityPoint.add(newMemento.owner, {
         action: 'createPostMementoOwner'
-      })  
+      })
 
+      
       const user = await this.storage.db.collection('user').findOne({
         id: userId
       })
       newPost.user = user
       newPost.memento = newMemento
 
+      await this.ctl().notification.processEvent('createPost', newPost)
+      
       return newPost
     } catch (err) {
       console.log(err)

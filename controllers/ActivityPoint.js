@@ -20,16 +20,25 @@ class ActivityPoint {
     return Math.round(max / (Math.random() * max + min))
   }
 
-  async get(userId) {
-    try {
-      const activityList = await this.storage.get('activityPoint', {
-        userId: userId
-      })
+  async reset() {
+    await this.storage.db.collection('activityPoint').deleteMany({})
+    return true
+  }
 
-      if (activityList.length === 0) {
-        return 0
-      }
-      return activityList[0].point
+  async getByUserId(userId) {
+    const user = await this.get({
+      userId: userId
+    })
+    if (activityList.length === 0) {
+      return 0
+    }
+    return user[0].point
+  }
+
+  async get(query) {
+    try {
+      const activityList = await this.storage.get('activityPoint', query)
+      return activityList
     } catch (err) {
       console.log(err)
       throw err
@@ -37,6 +46,10 @@ class ActivityPoint {
   }
 
   async add(userId, payload) {
+    const skip = userId.split('::')
+    if (skip.length > 0 && skip[0] === 'paras') {
+      return true
+    }
     const base = basePoint[payload.action]
     const point = base + this._weightedRandom(1, base)
     await this.storage.db.collection('activityHistory').insertOne({

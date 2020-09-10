@@ -8,6 +8,46 @@ class Wallet {
     this.ctl = ctl
   }
 
+  async mint(receiverId, value) {
+    const totalSupply = await this.totalSupply()
+    const biValue = JSBI.BigInt(value)
+    const biTotalSupply = JSBI.BigInt(totalSupply)
+    const newTotalSupply = JSBI.add(biValue, biTotalSupply)
+    await this.storage.db.collection('kv').findOneAndUpdate({
+      key: 'totalSupply'
+    }, {
+      $set: {
+        value: newTotalSupply.toString()
+      }
+    }, {
+      upsert: true
+    })
+    const balance = await this.get(receiverId)
+    const biBalance = JSBI.BigInt(balance)
+
+    await this.storage.db.collection('balance').findOneAndUpdate({
+      owner: receiverId
+    }, {
+      $set: {
+        value: JSBI.add(biBalance, biValue).toString()
+      }
+    }, {
+      upsert: true
+    })
+
+    return newTotalSupply.toString()
+  }
+
+  async totalSupply() {
+    const totalSupply = await this.storage.db.collection('kv').findOne({
+      key: 'totalSupply'
+    })
+    if (!totalSupply) {
+      return '0'
+    }
+    return totalSupply.value
+  }
+
   async get(userId) {
     try {
       const balance = await this.storage.db.collection('balance').findOne({

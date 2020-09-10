@@ -12,7 +12,6 @@ const multer = require('./middleware/multer')
 const State = require('./State')
 const Storage = require('./Storage')
 const Mail = require('./Mail')
-const Cron = require('./Cron')
 const Near = require('./Near')
 
 const Feed = require('./controllers/Feed')
@@ -27,6 +26,7 @@ const Memento = require('./controllers/Memento')
 const Post = require('./controllers/Post')
 const Notification = require('./controllers/Notification')
 const ActivityPoint = require('./controllers/ActivityPoint')
+const Reward = require('./controllers/Reward')
 
 const PORT = 9090
 const server = express()
@@ -35,13 +35,11 @@ const main = async () => {
   const storage = new Storage()
   const mail = new Mail()
   const state = new State(storage)
-  // const cron = new Cron(storage, mail)
   const near = new Near()
   try {
     await storage.init()
     await mail.init()
     await state.init()
-    // await cron.init()
     await near.init()
   } catch (err) {
     console.log(err)
@@ -66,6 +64,7 @@ const main = async () => {
   const activityPoint = new ActivityPoint(storage, near)
   const memento = new Memento(storage, near, ctl)
   const post = new Post(storage, near, ctl)
+  const reward = new Reward(storage, near, ctl)
   const metascraper = new Metascraper(storage)
   const notification = new Notification(storage)
   const auth = new Auth(state, storage, mail, near, ctl)
@@ -80,6 +79,7 @@ const main = async () => {
     activityPoint: activityPoint,
     memento: memento,
     post: post,
+    reward: reward,
     metascraper: metascraper,
     notification: notification,
     auth: auth
@@ -737,7 +737,7 @@ const main = async () => {
 
   server.get('/activityPoint/:id', async (req, res) => {
     try {
-      const accountPoint = await activityPoint.get(req.params.id)
+      const accountPoint = await activityPoint.getByUserId(req.params.id)
       return res.json({
         success: 1,
         data: accountPoint

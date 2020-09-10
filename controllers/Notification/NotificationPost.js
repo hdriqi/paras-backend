@@ -15,7 +15,7 @@ class NotificationPost {
   async create(data, send) {
     // if post.memento.owner && post.owner !== post.memento.owner
     if (data.mementoId) {
-      
+
       const memento = data.memento || await this.storage.db.collection('memento').findOne({
         id: data.mementoId
       })
@@ -119,36 +119,37 @@ class NotificationPost {
     }
   }
 
-  async update(data, send, params) {
-    // if post is redacted
-    if (!data.mementoId) {
-      // params = [id, mementoId]
-      const [postId, mementoId] = params.split('_')
-      const memento = await this.storage.db.collection('memento').findOne({
-        id: mementoId
-      })
-      if (memento && memento.owner !== data.owner) {
-        const payload = {
-          screen: 'post',
-          id: postId
-        }
-        const newNotification = {
-          payload: payload,
-          message: `Your post has been redacted from ${mementoId}`,
-          userId: data.owner,
-          createdAt: new Date().getTime()
-        }
-        await this.storage.db.collection('notification').insertOne(newNotification)
-        console.log(`send notification to ${data.owner} with message ${newNotification.message}`)
-        try {
-          send(data.owner, payload, {
-            title: 'Paras',
-            icon: 'ic_launcher',
-            body: newNotification.message
-          })
-        } catch (err) {
-          console.log(err)
-        }
+
+  /**
+   * @param {Object} param - post data.
+   * @param {string} param.mementoId - post mementoId.
+   * @param {string} param.owner - post owner.
+   */
+  async redact(data, send) {
+    const memento = await this.storage.db.collection('memento').findOne({
+      id: data.mementoId
+    })
+    if (memento && memento.owner !== data.owner) {
+      const payload = {
+        screen: 'post',
+        id: data.postId
+      }
+      const newNotification = {
+        payload: payload,
+        message: `Your post has been redacted from ${data.mementoId}`,
+        userId: data.owner,
+        createdAt: new Date().getTime()
+      }
+      await this.storage.db.collection('notification').insertOne(newNotification)
+      console.log(`send notification to ${data.owner} with message ${newNotification.message}`)
+      try {
+        send(data.owner, payload, {
+          title: 'Paras',
+          icon: 'ic_launcher',
+          body: newNotification.message
+        })
+      } catch (err) {
+        console.log(err)
       }
     }
   }

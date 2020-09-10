@@ -73,6 +73,9 @@ class Notification {
     if (action === 'createPost') {
       this.notifyPost.create(data, this.send)
     }
+    if (action === 'redactPost') {
+      this.notifyPost.redact(data, this.send)
+    }
     // if (type === 'create') {
     //   if (collection === 'comment') {
     //     this.notifyComment.create(data, this.send)

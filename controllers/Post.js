@@ -202,6 +202,12 @@ class Post {
     updatedPostData.user = user
     updatedPostData.memento = null
 
+    await this.ctl().notification.processEvent('redactPost', {
+      mementoId: memento.id,
+      owner: post.owner,
+      postId: post.id
+    })
+
     return updatedPostData
   }
 

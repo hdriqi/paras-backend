@@ -55,7 +55,7 @@ const main = async () => {
     return svc
   }
 
-  const feed = new Feed(state, storage)
+  const feed = new Feed(state, storage, ctl)
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
   const explore = new Explore(state, storage)

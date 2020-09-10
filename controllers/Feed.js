@@ -1,7 +1,8 @@
 class Feed {
-  constructor(state, storage) {
+  constructor(state, storage, ctl) {
     this.state = state
     this.storage = storage
+    this.ctl = ctl
   }
 
   async get(id, skip = 0, limit = 5) {

@@ -106,16 +106,19 @@ class Wallet {
   }
 
   async piece(userId, postId, value) {
-    // check token own
     const self = this
     const postCtl = this.ctl().post
     const postList = await postCtl.get({
       id: postId
     })
+    if (postList.length === 0) {
+      throw new Error('Post not exist')
+    }
+
     const post = postList[0]
     // get transfer with certain message
     const supporterList = await this.ctl().transaction.get({
-      msg: `System::Piece::${postId}`
+      msg: `System::PieceSupporter::${postId}`
     })
     const tokens = JSBI.BigInt(value)
     let tokensForPostOwner = supporterList.length > 0 ? this._percent(value, '80', '100') : tokens
@@ -149,6 +152,27 @@ class Wallet {
       }
     }
     await self.internalTransfer(userId, post.owner, tokensForPostOwner.toString(), `System::Piece::${postId}`)
+    const postScore = await this.storage.db.collection('postScore').findOne({
+      postId: post.id
+    })
+    const newTotalPieceScore = postScore ? JSBI.add(JSBI.BigInt(postScore.totalPiece), JSBI.BigInt(value)) : JSBI.BigInt(value)
+
+    // calculate new score
+    const a = JSBI.multiply(JSBI.BigInt(Math.round(Math.log(newTotalPieceScore) * 1000)), JSBI.BigInt('8')) 
+    const b = JSBI.BigInt(post.createdAt)
+    console.log(a.toString(), b.toString())
+    const newScore = JSBI.add(a, b)
+
+    await this.storage.db.collection('postScore').findOneAndUpdate({
+      postId: post.id,
+    }, {
+      $set: {
+        totalPiece: newTotalPieceScore.toString(),
+        score: newScore.toString()
+      }
+    }, {
+      upsert: true
+    })
     console.log(`${post.owner} -> ${tokensForPostOwner.toString()}`)
     return true
   }

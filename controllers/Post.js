@@ -74,7 +74,7 @@ class Post {
         action: 'createPostMementoOwner'
       })
 
-      
+
       const user = await this.storage.db.collection('user').findOne({
         id: userId
       })
@@ -82,7 +82,13 @@ class Post {
       newPost.memento = newMemento
 
       await this.ctl().notification.processEvent('createPost', newPost)
-      
+
+      await this.storage.db.collection('postScore').insertOne({
+        postId: newPost.id,
+        totalPiece: '0',
+        score: newPost.createdAt
+      })
+
       return newPost
     } catch (err) {
       console.log(err)

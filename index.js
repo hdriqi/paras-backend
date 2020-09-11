@@ -100,11 +100,19 @@ const main = async () => {
   })
 
   server.get('/metaget', async (req, res) => {
-    const metadata = await metascraper.get(req.query.link)
-    return res.json({
-      success: 1,
-      data: metadata
-    })
+    try {
+      const metadata = await metascraper.get(req.query.link)
+      return res.json({
+        success: 1,
+        data: metadata
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.post('/upload', multer.single('file'), async (req, res) => {

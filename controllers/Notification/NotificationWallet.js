@@ -41,7 +41,7 @@ class NotificationWallet {
     }
     else {
       const payload = {
-        screen: 'user',
+        screen: 'walletHistory',
         id: data.from
       }
       const newNotification = {

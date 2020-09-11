@@ -50,15 +50,6 @@ class Notification {
       contentAvailable: true,
       data: data,
       notification: notification
-      // data: {
-      //   screen: 'message1',
-      //   id: 'message2'
-      // },
-      // notification: {
-      //   title: "Hello, World",
-      //   icon: "ic_launcher",
-      //   body: "This is a notification that will be displayed if your app is in the background."
-      // }
     })
 
     this.sender.send(message, {

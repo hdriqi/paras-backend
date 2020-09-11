@@ -46,7 +46,7 @@ class Notification {
   sendPushNotification(deviceIds, data, notification) {
     let message = new gcm.Message({
       priority: 'high',
-      dryRun: true,
+      dryRun: false,
       contentAvailable: true,
       data: data,
       notification: notification
@@ -69,8 +69,10 @@ class Notification {
         console.error(err)
       } else {
         console.log(response)
-        const inactiveDeviceIds = deviceIds.filter((token, i) => response[i].error != null)
-        console.log('These tokens are no longer ok:', inactiveDeviceIds)
+        if (Array.isArray(response)) {
+          const inactiveDeviceIds = deviceIds.filter((token, i) => response[i].error != null)
+          console.log('These tokens are no longer ok:', inactiveDeviceIds)
+        }
       }
     })
   }

@@ -15,6 +15,13 @@ class Notification {
   }
 
   async register(userId, payload) {
+    const existDevice = await this.storage.db.collection('device').findOne({
+      userId, userId,
+      id: payload.deviceId
+    })
+    if (existDevice) {
+      return existDevice
+    }
     const newDevice = await this.storage.db.collection('device').insertOne({
       userId: userId,
       id: payload.deviceId,

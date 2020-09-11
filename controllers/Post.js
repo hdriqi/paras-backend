@@ -86,7 +86,7 @@ class Post {
       await this.storage.db.collection('postScore').insertOne({
         postId: newPost.id,
         totalPiece: '0',
-        score: newPost.createdAt
+        score: newPost.createdAt.toString()
       })
 
       return newPost

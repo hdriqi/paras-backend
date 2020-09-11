@@ -203,6 +203,9 @@ const main = async () => {
   })
 
   server.get('/mementos', async (req, res) => {
+    if (!req.query.__limit) {
+      req.query.__limit = 10
+    }
     const mementoList = await memento.get(req.query)
     return res.json({
       success: 1,
@@ -420,6 +423,9 @@ const main = async () => {
 
   server.get('/posts', async (req, res) => {
     try {
+      if (!req.query.__limit) {
+        req.query.__limit = 10
+      }
       const postList = await post.get(req.query)
       return res.json({
         success: 1,
@@ -612,6 +618,9 @@ const main = async () => {
   })
 
   server.get('/transactions', async (req, res) => {
+    if (!req.query.__limit) {
+      req.query.__limit = 10
+    }
     const txList = await transaction.getById(req.query.id, req.query.__skip, req.query.__limit)
     return res.json({
       success: 1,
@@ -620,6 +629,9 @@ const main = async () => {
   })
 
   server.get('/search', async (req, res) => {
+    if (!req.query.__limit) {
+      req.query.__limit = 10
+    }
     const itemList = await explore.search(req.query)
     return res.json({
       success: 1,
@@ -767,6 +779,9 @@ const main = async () => {
   })
 
   server.get('/comments', async (req, res) => {
+    if (!req.query.__limit) {
+      req.query.__limit = 10
+    }
     const commentList = await comment.get(req.query)
     return res.json({
       success: 1,

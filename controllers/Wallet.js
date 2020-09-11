@@ -1,6 +1,6 @@
 const JSBI = require('jsbi')
 const shortid = require('shortid')
-const { groupBy } = require('../utils/common')
+const { groupBy, logBase } = require('../utils/common')
 
 class Wallet {
   constructor(storage, near, ctl) {
@@ -118,7 +118,7 @@ class Wallet {
     const post = postList[0]
     // get transfer with certain message
     const supporterList = await this.ctl().transaction.get({
-      msg: `System::PieceSupporter::${postId}`
+      msg: `System::Piece::${postId}`
     })
     const tokens = JSBI.BigInt(value)
     let tokensForPostOwner = supporterList.length > 0 ? this._percent(value, '80', '100') : tokens
@@ -152,28 +152,37 @@ class Wallet {
       }
     }
     await self.internalTransfer(userId, post.owner, tokensForPostOwner.toString(), `System::Piece::${postId}`)
+    console.log(`${post.owner} -> ${tokensForPostOwner.toString()}`)
+
     const postScore = await this.storage.db.collection('postScore').findOne({
       postId: post.id
     })
     const newTotalPieceScore = postScore ? JSBI.add(JSBI.BigInt(postScore.totalPiece), JSBI.BigInt(value)) : JSBI.BigInt(value)
 
     // calculate new score
-    const a = JSBI.multiply(JSBI.BigInt(Math.round(Math.log(newTotalPieceScore) * 1000)), JSBI.BigInt('8')) 
-    const b = JSBI.BigInt(post.createdAt)
-    console.log(a.toString(), b.toString())
-    const newScore = JSBI.add(a, b)
-
-    await this.storage.db.collection('postScore').findOneAndUpdate({
-      postId: post.id,
-    }, {
-      $set: {
-        totalPiece: newTotalPieceScore.toString(),
-        score: newScore.toString()
-      }
-    }, {
-      upsert: true
+    supporterList.push({
+      from: userId
     })
-    console.log(`${post.owner} -> ${tokensForPostOwner.toString()}`)
+    const nOfPiece = supporterList.length > 0 ? Object.keys(groupBy(supporterList, 'from')).length : 1
+    const x = 144000 * logBase(newTotalPieceScore.toString() / (10 ** 18), 5) * logBase(nOfPiece, 10)
+    const threshold = JSBI.BigInt((Math.round(x)))
+    if (JSBI.greaterThan(threshold, JSBI.BigInt('0'))) {
+      const a = JSBI.multiply(threshold, JSBI.BigInt(1))
+      const b = JSBI.BigInt(post.createdAt)
+      const newScore = JSBI.add(a, b)
+      console.log(a.toString())
+      await this.storage.db.collection('postScore').findOneAndUpdate({
+        postId: post.id,
+      }, {
+        $set: {
+          totalPiece: newTotalPieceScore.toString(),
+          score: newScore.toString()
+        }
+      }, {
+        upsert: true
+      })
+    }
+
     return true
   }
 

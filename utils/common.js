@@ -14,7 +14,12 @@ const groupBy = function (xs, key) {
   }, {})
 }
 
+const logBase = (n, base) => {
+  return Math.log(n) / Math.log(base)
+}
+
 module.exports = {
   prettyBalance,
-  groupBy
+  groupBy,
+  logBase
 } 

@@ -5,6 +5,27 @@ class Feed {
     this.ctl = ctl
   }
 
+  async getByScore(skip = 0, limit = 5) {
+    const postScoreData = await this.storage.db.collection('postScore')
+      .find()
+      .sort({
+        score: -1
+      })
+      .skip(skip)
+      .limit(limit)
+
+    const postIds = (await postScoreData.toArray()).map(ps => ps.postId)
+    const result = await this.ctl().post.get({
+      id: {
+        $in: postIds
+      }
+    })
+    const postList = postIds.map(id => {
+      return result.find(res => res.id === id)
+    })
+    return postList
+  }
+
   async get(id, skip = 0, limit = 5) {
     const followingList = await this.getFollowing(id, 0, 0, true)
     followingList.push({

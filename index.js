@@ -416,6 +416,7 @@ const main = async () => {
       })
     }
   })
+  
 
   server.get('/posts', async (req, res) => {
     try {
@@ -809,6 +810,27 @@ const main = async () => {
       return res.status(400).json({
         success: 0,
         message: err.message
+      })
+    }
+  })
+
+  server.get('/feeds/top', authenticate({ auth: auth }), async (req, res) => {
+    const {
+      __skip,
+      __limit
+    } = req.query
+
+    try {
+      const result = await feed.getByScore(__skip, __limit)
+      return res.json({
+        success: 1,
+        data: result
+      })
+    } catch (err) {
+      console.log(err)
+      return res.json({
+        success: 0,
+        message: err
       })
     }
   })

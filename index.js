@@ -427,7 +427,7 @@ const main = async () => {
       })
     }
   })
-  
+
 
   server.get('/posts', async (req, res) => {
     try {
@@ -647,6 +647,23 @@ const main = async () => {
     })
   })
 
+  server.get('/notifications', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      req.query.userId = req.userId
+      const notificationList = await storage.get('notification', req.query)
+      return res.json({
+        success: 1,
+        data: notificationList
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
   server.get('/users', async (req, res) => {
     const userList = await storage.get('user', req.query)
     return res.json({
@@ -656,7 +673,7 @@ const main = async () => {
   })
 
   server.get('/explore', async (req, res) => {
-    const postList = await explore.getPost()
+    const newPostList = await explore.getPost()
     return res.json({
       success: 1,
       data: newPostList

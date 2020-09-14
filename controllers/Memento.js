@@ -132,7 +132,9 @@ class Memento {
       id: payload.mementoId
     })
 
-    // to do return stake
+    await this.storage.db.collection('post').deleteMany({
+      mementoId: payload.mementoId
+    })
 
     return exist[0]
   }

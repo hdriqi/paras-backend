@@ -128,14 +128,17 @@ class Memento {
       throw new Error('Memento can only be deleted by owner')
     }
 
+    
     await this.storage.db.collection('memento').deleteOne({
       id: payload.mementoId
     })
-
+    
+    await this.ctl().feed.unfollow(userId, payload.mementoId, 'memento')
+    
     await this.storage.db.collection('post').deleteMany({
       mementoId: payload.mementoId
     })
-
+    
     return exist[0]
   }
 

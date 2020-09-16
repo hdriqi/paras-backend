@@ -188,7 +188,6 @@ class Wallet {
 
   async internalTransfer(userId, receiverId, value, msg = '') {
     const fromBalance = JSBI.BigInt(await this.get(userId))
-    const toBalance = JSBI.BigInt(await this.get(receiverId))
     const tokens = JSBI.BigInt(value)
 
     if (!JSBI.greaterThanOrEqual(fromBalance, tokens)) {
@@ -204,6 +203,8 @@ class Wallet {
     }, {
       upsert: true
     })
+    
+    const toBalance = JSBI.BigInt(await this.get(receiverId))
     await this.storage.db.collection('balance').findOneAndUpdate({
       owner: receiverId
     }, {

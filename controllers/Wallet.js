@@ -138,12 +138,13 @@ class Wallet {
         }
       })
       let remainder = distributeTokens
+      await self.internalTransfer(userId, 'paras::supporter', tokensForSupporter.toString(), `System::PieceSupporter::${postId}`)
       await Promise.all(supporterIds.map((sup) => {
         return new Promise(async (resolve, reject) => {
           const tokens = JSBI.divide(JSBI.multiply(sup.totalPiece, distributeTokens), totalPiece)
           console.log(`${sup.userId} ${sup.totalPiece.toString()} -> ${tokens.toString()}`)
           remainder = JSBI.subtract(remainder, tokens)
-          await self.internalTransfer(userId, sup.userId, tokens.toString(), `System::PieceSupporter::${postId}`)
+          await self.internalTransfer('paras::supporter', sup.userId, tokens.toString(), `System::PieceSupporter::${postId}`)
           resolve()
         })
       }))

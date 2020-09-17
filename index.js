@@ -27,6 +27,7 @@ const Post = require('./controllers/Post')
 const Notification = require('./controllers/Notification')
 const ActivityPoint = require('./controllers/ActivityPoint')
 const Reward = require('./controllers/Reward')
+const User = require('./controllers/User')
 
 const PORT = 9090
 const server = express()
@@ -55,6 +56,7 @@ const main = async () => {
     return svc
   }
 
+  const user = new User(storage, near, ctl)
   const feed = new Feed(state, storage, ctl)
   const transaction = new Transaction(state, storage)
   const verification = new Verification(state, storage, mail)
@@ -70,6 +72,7 @@ const main = async () => {
   const auth = new Auth(state, storage, mail, near, ctl)
 
   const svc = {
+    user: user,
     feed: feed,
     transaction: transaction,
     verification: verification,
@@ -665,11 +668,39 @@ const main = async () => {
   })
 
   server.get('/users', async (req, res) => {
-    const userList = await storage.get('user', req.query)
-    return res.json({
-      success: 1,
-      data: userList
-    })
+    try {
+      const userList = await user.get(req.query)
+      return res.json({
+        success: 1,
+        data: userList
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
+  })
+
+  server.put('/users/:userId', authenticate({ auth: auth }), async (req, res) => {
+    try {
+      const userId = req.userId
+      if (!(userId && req.body.imgAvatar && req.body.bio)) {
+        throw new Error('Required [body:imgAvatar, body:bio]')
+      }
+      const newUser = await user.update(userId, req.body)
+      return res.json({
+        success: 1,
+        data: newUser
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({
+        success: 0,
+        message: err.message
+      })
+    }
   })
 
   server.get('/explore', async (req, res) => {

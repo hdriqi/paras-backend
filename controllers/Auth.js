@@ -145,6 +145,7 @@ class Auth {
           imgAvatar: avatar,
           bio: ''
         })
+        profile.createdAt = new Date().getTime()
 
         await this.storage.db.collection('user').insertOne(profile)
 

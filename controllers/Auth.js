@@ -133,9 +133,10 @@ class Auth {
         secretKey: secretKey
       })
       const loadedAccount = this.near.accountsMap.get(userId)
-      let profile = await loadedAccount.contract.getUserById({
+      const getUser = await this.ctl().user.get({
         id: userId
       })
+      const profile = getUser[0]
 
       if (!profile) {
         // create account on smart contract

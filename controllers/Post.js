@@ -155,6 +155,9 @@ class Post {
     await this.storage.db.collection('post').deleteOne({
       id: payload.postId
     })
+    await this.storage.db.collection('postScore').deleteOne({
+      postId: payload.postId
+    })
 
     await this.ctl().activityPoint.slash(userId, {
       action: 'deletePost'

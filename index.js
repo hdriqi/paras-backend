@@ -686,6 +686,9 @@ const main = async () => {
   server.put('/users/:userId', authenticate({ auth: auth }), async (req, res) => {
     try {
       const userId = req.userId
+      if (userId !== req.params.userId) {
+        throw new Error('User can only be updated by owner')
+      }
       if (!(userId && req.body.imgAvatar && req.body.bio)) {
         throw new Error('Required [body:imgAvatar, body:bio]')
       }

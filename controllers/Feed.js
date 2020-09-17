@@ -11,8 +11,8 @@ class Feed {
       .sort({
         score: -1
       })
-      .skip(skip)
-      .limit(limit)
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
 
     const postIds = (await postScoreData.toArray()).map(ps => ps.postId)
     const result = await this.ctl().post.get({

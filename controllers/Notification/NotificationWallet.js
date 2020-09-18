@@ -38,6 +38,29 @@ class NotificationWallet {
           console.log(err)
         }
       }
+      if (splitMsg[1] === 'RewardDisburse') {
+        const payload = {
+          screen: 'walletHistory',
+          id: data.from
+        }
+        const newNotification = {
+          payload: payload,
+          message: `You've receive ${prettyBalance(data.value)} PAC via Daily Reward`,
+          userId: data.to,
+          createdAt: new Date().getTime()
+        }
+        await this.storage.db.collection('notification').insertOne(newNotification)
+        console.log(`send notification to ${data.to} with message ${newNotification.message}`)
+        try {
+          send(data.to, payload, {
+            title: 'Paras',
+            icon: 'ic_launcher',
+            body: newNotification.message
+          })
+        } catch (err) {
+          console.log(err)
+        }
+      }
     }
     else {
       const payload = {

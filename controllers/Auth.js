@@ -142,10 +142,17 @@ class Auth {
         // create account on smart contract
         const avatar = DEFAULT_AVATAR[Math.floor(Math.random() * DEFAULT_AVATAR.length)]
 
-        profile = await loadedAccount.contract.createUser({
-          imgAvatar: avatar,
-          bio: ''
-        })
+        try {
+          profile = await loadedAccount.contract.createUser({
+            imgAvatar: avatar,
+            bio: ''
+          })
+        } catch (err) {
+          console.log(err)
+          profile = await loadedAccount.contract.getUserById({
+            id: userId
+          })
+        }
         profile.createdAt = new Date().getTime()
 
         await this.storage.db.collection('user').insertOne(profile)
